@@ -7,4 +7,3 @@
  *   Input pins from X8R radio receiver.
  */
 #define JLX_IN_PIN 10     //ch. 1
-#define JLY_IN_PIN 11     //ch. 2
