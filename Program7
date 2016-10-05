@@ -1,193 +1,183 @@
+//NOTE:  CAN I USE BREAK; IN THE WHILE LOOPS TO AVOID WITH EMPTY LINES
 //Arshya Sharifian, CPSC 121, Program#6
 /*
-This program collects various information contained within an input file and
-stores the values inside a structure.  Then, after completing each profile,
-the program prints or outputs those values in an easy to read format.  This
-process continues until there are no more values to read.
+This program completes the same action in two separate and distinguishable ways;
+first, it stores values from a file into parallel arrays and outputs the
+information to the user; second, it stores values into an array of structures, 
+and again, output the information to the user.  Here, we are performing the 
+same tasks in two unique ways.
 */
+//Pre-Processing 
 #include <iostream>
-#include <fstream>
 #include <string>
-#include <iomanip>
+#include <fstream>
 using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
-
 //Structure Declaration
-struct buy {
-	string item_name;
-	int num_items_purchased;
-	double cost_items,
-		   price_per_items;
+struct profile {
+	int age;
+	string name;
 };
-
 ///////////////////////////////////////////////////////////////////////////////
-
 //Function Prototypes
-void open_file(ifstream&);
-void no_file_found(ifstream&);
-void fill_struct(ifstream&, buy&, string, double&);
-void formatting();
-void printing_profile(ifstream&, buy&, string, double&);
-
+void openFile(ifstream&, string);
+void getParallelData(ifstream&, string, int*, string*, int &);
+int searchParallel(int*, string *, int);
+void outputParallel(int *, string *, int);
+void getStructData(ifstream&, string, profile *);
+int searchStruct(profile *, int);
+void outputStruct(profile *, int);
 ///////////////////////////////////////////////////////////////////////////////
-
 int main() {
-
-	//Variables
-	buy item;
+///////////////////////////////////////////////////////////////////////////////	
+	//Variables Declaration and Initialization
+	string file_name, read_file;
 	ifstream fin;
-	string read_file;
-	double total_cost = 0;
-
+	profile person[20];
+	int age[20], index = 0, index_max_age = 0, arrsize = 0;
+	string name[20];
 ///////////////////////////////////////////////////////////////////////////////
-
-	//Function Call
-	open_file(fin);
-	no_file_found(fin);
-	formatting();
-	fill_struct(fin, item, read_file, total_cost);
-
-///////////////////////////////////////////////////////////////////////////////
-
-	return 0;
-//end main
+	//FUNCTION CALL
+	openFile(fin, file_name);
+	getParallelData(fin, read_file, age, name, arrsize);
+	index_max_age = searchParallel(age, name, arrsize);
+	outputParallel(age, name, index_max_age);
+	fin.close();
+	openFile(fin, file_name);
+	getStructData(fin, read_file, person);
+	index_max_age = searchStruct(person, arrsize);
+	outputStruct(person, index_max_age);
+	fin.close();
+///////////////////////////////////////////////////////////////////////////////	
+return 0;
+//END MAIN
 }
-
 ///////////////////////////////////////////////////////////////////////////////
 /*
-The open_file function asks the user for a file name and attempts to open that
-file in the function
+The openFile function asks the user for the name of the file they wish to open
+and attempts to open the file.  If the file name is not found, then the program
+is terminated.
 */
-void open_file(ifstream & fin) {
-	//local variable
-	string file_name;
-	
-	//asking the user for the name of the file they wish to open
-	cout << "What is the name of the file you wish to open?" << endl;
+void openFile(ifstream & fin, string file_name) {
+	cout << "Please enter the name of the file you wish to open:  " << endl;
 	cin >> file_name;
 	fin.open(file_name.c_str());
-//end function open_file
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/*
-The no_file_found function sees if the file was opened, if it was not opened
-then the program ends
-*/
-void no_file_found(ifstream&fin) {
+	//if the file is not found, exit the program
 	if (!fin) {
-		cout << "Sorry we could not open file" << endl;
+		cout << "file not found, exiting program" << endl;
 		exit(0);
 	//end if not fin
 	}
-//end function no_file_found
+//End function openFile
 }
-
 ///////////////////////////////////////////////////////////////////////////////
 /*
-The formatting function simply formats the output values and displays and
-defines the beginning of the output. It also limits the double digits
-to two decimal places
+The getParallelData function simply stores information from the opened file
+into two parallel arrays for later use.  We also determine the number of 
+profiles in the file using arrsize.
 */
-void formatting() {
-	cout << "The file was successfully opened" << endl << endl;
-	cout << fixed << setprecision(2);
-	cout << " Qty  Item        Price/Item        Cost" << endl;
-//end function formatting
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/*
-The fill_struct function fills the structure with various values contained
-within the file opened.  Once a profile is complete, the functions calls the
-printing profile function to output the struct values.
-*/
-void fill_struct(ifstream& fin, buy& item, 
-				 string read_file, double & total_cost) {
-	//local variables
-	bool profile_complete = false;
-	bool word = false;
-
-///////////////////////////////////////////////////////////////////////////////
+void getParallelData(ifstream & fin, string read_file, int * age, string * name, int & arrsize) {
+	//Local Variable
+	int index = 0;
 	
-	//while there is information in the file
-	while (getline(fin, read_file) && !(profile_complete)) {
-		
-///////////////////////////////////////////////////////////////////////////////
-
-		//STORING FILE INFO
-		//If word is true, the next value will be the number of items purchased
-		if (word) {
-			item.num_items_purchased = stoi(read_file);
-			word = false;
-		//end else if word
+	while (getline(fin, read_file) && read_file.length() > 0) {
+		if (isalpha(read_file[0])) {
+			name[index] = read_file;
+		//end if isalpha
 		}
-		//The first character is a letter, meaning it is part of a name
-		else if (isalpha(read_file[0])) {
-			item.item_name = read_file;
-			word = true;
-		//end else if isalpha
-		}
-		//the first character is a digit
 		else if (isdigit(read_file[0])) {
-			item.cost_items = atof(read_file.c_str());
-			item.price_per_items = item.cost_items / item.num_items_purchased;
-			//summing the total cost of items
-			total_cost = total_cost + item.cost_items;
-			//After reading the total price, the profile is complete
-			profile_complete = true;
+			age[index] = stoi(read_file);
+			index++;
+			arrsize++;
 		//end else if isdigit
 		}
-
-///////////////////////////////////////////////////////////////////////////////
-
-		//PRINTING FILE INFO
-		//if the profile is complete
-		if (profile_complete) {	
-			//Calling another function to print the profile
-			printing_profile(fin, item, read_file, total_cost);
-		//end if, profile is complete
-		}	
-	//end while fin
+	//end while
 	}
-//end function fill_stucture
+//end function getParallelData
 }
-
 ///////////////////////////////////////////////////////////////////////////////
 /*
-The printing_profile function prints the structure values in a easy to follow
-format and returns to the fill_structure function if there remains values
-to be read.  Otherwise, the file is closed and the program ends.
+Here, we are searching through the various values held in the parallel array
+and determining which person is the oldest.  The index value of the oldest
+person is then sent back to main for future use.
 */
-void printing_profile(ifstream & fin, buy& item, 
-					  string read_file, double & total_cost) {
-	//local variable
-	char read_forward = NULL;
-
-///////////////////////////////////////////////////////////////////////////////
-
-	//formatting and printing the profiles
-	cout << right << setw(4) << item.num_items_purchased << "  "
-		<< left << setw(12) << item.item_name
-		<< right << setw(10) << item.price_per_items
-		<< setw(12) << item.cost_items << endl;
-
-	//if there is another character complete another profile
-	if (fin >> read_forward) {
-		fin.putback(read_forward);
-		fill_struct(fin, item, read_file, total_cost);
-	//end if there is another character	
+int searchParallel(int * age, string * name, int arrsize) {
+	//local variables
+	int max_age = 0, index = 0;
+	//searching the array for largest age
+	for (int i = 0; i < arrsize; i++) {
+		if (age[i] > max_age) {
+			max_age = age[i];
+			index = i;
+		//end if age
+		}
+	//end for loop
 	}
-	//otherwise, print the total cost and close the file
-	else {
-		fin >> read_file;
-		cout << setw(28) << right << "Total Cost"
-			 << setw(12) << total_cost << endl << endl;
-		fin.close();
-		cout << "The program is complete and the file is closed" << endl;
-	//end else
-	}
-//end function printing_profile
+	return index;
+//end function searchParallel
 }
+///////////////////////////////////////////////////////////////////////////////
+/*
+The function outputParallel prints the name and age of the oldest person.
+*/
+void outputParallel(int * age, string * name, int index_max_age) {
+	cout << name[index_max_age] << " is the oldest at "
+		<< age[index_max_age] << endl;
+}
+///////////////////////////////////////////////////////////////////////////////
+/*
+The getStructData function reads through the user inputed file name and stores
+values inside the structure array.  
+*/
+void getStructData(ifstream & fin, string read_file, profile * person) {
+	//local variable
+	int index = 0;
+	//while there are more values to read
+	while (getline(fin, read_file) && read_file.length() > 0) {
+		if (isalpha(read_file[0])) {
+			person[index].name = read_file;
+		//end if isalpha
+		}
+		else if (isdigit(read_file[0])) {
+			person[index].age = stoi(read_file);
+			index++;
+		//end else if isdigit
+		}
+	//end while
+	}
+//end function getStructData
+}
+///////////////////////////////////////////////////////////////////////////////
+/*
+The searchStruct function searches through the structure array and determines
+who is the oldest person in the file.
+*/
+int searchStruct(profile * person, int arrsize) {
+	//local variables
+	int max_age = 0, index = 0;
+	//searching for the oldeest person
+	for (int i = 0; i < arrsize; i++) {
+		if (person[i].age > max_age) {
+			max_age = person[i].age;
+			index = i;
+		//end if person
+		}
+	//end for loop
+	}
+	//returnining the position of the oldest person in the array
+	return index;
+//end searchStruct function	
+}
+///////////////////////////////////////////////////////////////////////////////
+/*
+The outputStruct functions prints the name and age of the oldest person in the
+file.
+*/
+void outputStruct(profile * person, int index_max_age) {
+	cout << person[index_max_age].name << " is the oldest at "
+		<< person[index_max_age].age << endl;
+//end outputStruct function
+}
+///////////////////////////////////////////////////////////////////////////////
 //END FUNCTIONS
