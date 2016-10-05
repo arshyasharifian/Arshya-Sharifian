@@ -1,9 +1,0 @@
-
-#include <Servo.h>
-#include <PinChangeInt.h>
-#include <Math.h>
-
-/*  
- *   Input pins from X8R radio receiver.
- */
-#define JLX_IN_PIN 10     //ch. 1
