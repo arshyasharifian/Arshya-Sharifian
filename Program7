@@ -1,0 +1,193 @@
+//Arshya Sharifian, CPSC 121, Program#6
+/*
+This program collects various information contained within an input file and
+stores the values inside a structure.  Then, after completing each profile,
+the program prints or outputs those values in an easy to read format.  This
+process continues until there are no more values to read.
+*/
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <iomanip>
+using namespace std;
+
+///////////////////////////////////////////////////////////////////////////////
+
+//Structure Declaration
+struct buy {
+	string item_name;
+	int num_items_purchased;
+	double cost_items,
+		   price_per_items;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+
+//Function Prototypes
+void open_file(ifstream&);
+void no_file_found(ifstream&);
+void fill_struct(ifstream&, buy&, string, double&);
+void formatting();
+void printing_profile(ifstream&, buy&, string, double&);
+
+///////////////////////////////////////////////////////////////////////////////
+
+int main() {
+
+	//Variables
+	buy item;
+	ifstream fin;
+	string read_file;
+	double total_cost = 0;
+
+///////////////////////////////////////////////////////////////////////////////
+
+	//Function Call
+	open_file(fin);
+	no_file_found(fin);
+	formatting();
+	fill_struct(fin, item, read_file, total_cost);
+
+///////////////////////////////////////////////////////////////////////////////
+
+	return 0;
+//end main
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/*
+The open_file function asks the user for a file name and attempts to open that
+file in the function
+*/
+void open_file(ifstream & fin) {
+	//local variable
+	string file_name;
+	
+	//asking the user for the name of the file they wish to open
+	cout << "What is the name of the file you wish to open?" << endl;
+	cin >> file_name;
+	fin.open(file_name.c_str());
+//end function open_file
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/*
+The no_file_found function sees if the file was opened, if it was not opened
+then the program ends
+*/
+void no_file_found(ifstream&fin) {
+	if (!fin) {
+		cout << "Sorry we could not open file" << endl;
+		exit(0);
+	//end if not fin
+	}
+//end function no_file_found
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/*
+The formatting function simply formats the output values and displays and
+defines the beginning of the output. It also limits the double digits
+to two decimal places
+*/
+void formatting() {
+	cout << "The file was successfully opened" << endl << endl;
+	cout << fixed << setprecision(2);
+	cout << " Qty  Item        Price/Item        Cost" << endl;
+//end function formatting
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/*
+The fill_struct function fills the structure with various values contained
+within the file opened.  Once a profile is complete, the functions calls the
+printing profile function to output the struct values.
+*/
+void fill_struct(ifstream& fin, buy& item, 
+				 string read_file, double & total_cost) {
+	//local variables
+	bool profile_complete = false;
+	bool word = false;
+
+///////////////////////////////////////////////////////////////////////////////
+	
+	//while there is information in the file
+	while (getline(fin, read_file) && !(profile_complete)) {
+		
+///////////////////////////////////////////////////////////////////////////////
+
+		//STORING FILE INFO
+		//If word is true, the next value will be the number of items purchased
+		if (word) {
+			item.num_items_purchased = stoi(read_file);
+			word = false;
+		//end else if word
+		}
+		//The first character is a letter, meaning it is part of a name
+		else if (isalpha(read_file[0])) {
+			item.item_name = read_file;
+			word = true;
+		//end else if isalpha
+		}
+		//the first character is a digit
+		else if (isdigit(read_file[0])) {
+			item.cost_items = atof(read_file.c_str());
+			item.price_per_items = item.cost_items / item.num_items_purchased;
+			//summing the total cost of items
+			total_cost = total_cost + item.cost_items;
+			//After reading the total price, the profile is complete
+			profile_complete = true;
+		//end else if isdigit
+		}
+
+///////////////////////////////////////////////////////////////////////////////
+
+		//PRINTING FILE INFO
+		//if the profile is complete
+		if (profile_complete) {	
+			//Calling another function to print the profile
+			printing_profile(fin, item, read_file, total_cost);
+		//end if, profile is complete
+		}	
+	//end while fin
+	}
+//end function fill_stucture
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/*
+The printing_profile function prints the structure values in a easy to follow
+format and returns to the fill_structure function if there remains values
+to be read.  Otherwise, the file is closed and the program ends.
+*/
+void printing_profile(ifstream & fin, buy& item, 
+					  string read_file, double & total_cost) {
+	//local variable
+	char read_forward = NULL;
+
+///////////////////////////////////////////////////////////////////////////////
+
+	//formatting and printing the profiles
+	cout << right << setw(4) << item.num_items_purchased << "  "
+		<< left << setw(12) << item.item_name
+		<< right << setw(10) << item.price_per_items
+		<< setw(12) << item.cost_items << endl;
+
+	//if there is another character complete another profile
+	if (fin >> read_forward) {
+		fin.putback(read_forward);
+		fill_struct(fin, item, read_file, total_cost);
+	//end if there is another character	
+	}
+	//otherwise, print the total cost and close the file
+	else {
+		fin >> read_file;
+		cout << setw(28) << right << "Total Cost"
+			 << setw(12) << total_cost << endl << endl;
+		fin.close();
+		cout << "The program is complete and the file is closed" << endl;
+	//end else
+	}
+//end function printing_profile
+}
+//END FUNCTIONS
