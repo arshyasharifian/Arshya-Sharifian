@@ -1,0 +1,259 @@
+/*
+Questions:
+1.  Error checking for baby constructor private values, name and weight?
+2.  Can't I just combine the classes?
+3.  Opening file difficulties, had to use c_str()?
+4.  this means that medical record can access the private members listed in the baby class?
+friend class MedicalRecord;
+7.  Where else do you want us to have exception and catch?  Should we consider invalid entries for name and baby weight, etc?
+*/
+
+#include <string>
+#include <stdexcept>
+#include <fstream>
+#include <iostream>
+#include <cassert>
+using namespace std;
+
+class MedicalRecord;
+// class that contains information related to a single birth or baby name
+//START BABY CLASS
+class Baby {
+//PUBLIC FUNCTIONS
+public:
+///////////////////////////////////////////////////////////////////////////////
+	//default constructor definition
+	Baby() { 
+		name = "no name";
+		weight = -1;
+	}//end default constructor defintion
+///////////////////////////////////////////////////////////////////////////////
+	//constructor with name and weight parameters
+	Baby(string s, int w) { // constructor
+		name = s;
+		weight = w;
+	}//end constructor with name and weight parameter
+///////////////////////////////////////////////////////////////////////////////
+	// return weight
+	int getWeight() {
+		return weight;
+	}//end getweight function
+///////////////////////////////////////////////////////////////////////////////
+	// returns name
+	string getName() {
+		return name;
+	}//end getname function
+///////////////////////////////////////////////////////////////////////////////
+	//medical record class can access the private members listed in baby class
+	friend class MedicalRecord;
+///////////////////////////////////////////////////////////////////////////////
+//PRIVATE VALUES
+private:
+	string name;
+	int weight;
+};//END BABY CLASS
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+//START MEDICAL RECORD CLASS
+class MedicalRecord {
+	//PUBLIC FUNCTIONS
+public:
+	///////////////////////////////////////////////////////////////////////////////
+	// default constructor definition
+	MedicalRecord() {
+		baby_ds = new Baby[1000000];
+		unique_names = new string[2000];
+		baby_index = 0;
+		low_BW = 0;
+		unique_names_index = 0;
+	}//end default constructor definition
+	 ///////////////////////////////////////////////////////////////////////////////
+	 // destructor definition
+	~MedicalRecord() {
+		baby_ds = NULL;
+	}//end destructor
+	 ///////////////////////////////////////////////////////////////////////////////
+	 //determines if name considered is unique and stores unique names
+	void store_unique_name(string x) {
+		bool match = false;
+		//if there are some names to index that can be matched
+		if (unique_names_index > 0) {
+			for (int i = 0; i < unique_names_index; i++) {
+				if (unique_names[i] == x) {
+					match = true;
+					//ends for loop
+					i = unique_names_index;
+				}//end if loop, names are a match
+			}//end for loop
+			if (!match) {
+				unique_names[unique_names_index] = x;
+				unique_names_index++;
+			}
+		}//end if there are no names in the the memory
+		else {
+			unique_names[0] = x;
+			unique_names_index++;
+		}//if there aren't any names stored
+	}//end store unique names function
+	 ///////////////////////////////////////////////////////////////////////////////
+	 //returns number of unique names
+	int numberOfUniqueNames() {
+		return unique_names_index;
+	}//end return number of unique names function
+	 ///////////////////////////////////////////////////////////////////////////////
+	 // Load information from a text file with the given filename.
+	void buildMedicalRecordfromDatafile(string filename) {
+		ifstream myfile;
+		myfile.open(filename.c_str());
+		if (myfile.is_open()) {
+			cout << "Successfully opened file " << filename << endl;
+			string name;
+			int weight;
+			while (myfile >> name >> weight) {
+				//cout << name << " " << weight << endl;
+				//counting number of baby's with low birth weights 
+				if (weight < 2500) {
+					low_BW++;
+				}//end if
+				 //compiling a list of unique names
+				store_unique_name(name);
+				//adding a new object to an array of baby objects
+				Baby b(name, weight);
+				addEntry(b);
+			}//end while there are still values loop
+			myfile.close();
+		}//end if file is open function
+		else {
+			//need a catch for this
+			throw invalid_argument("Could not open file " + filename);
+			//cout << "something bad happened here" << endl;
+			//exit(0);
+		}//end else
+	}//end buildmedicalrecord function
+	 ///////////////////////////////////////////////////////////////////////////////
+	 // return the most frequently appearing name in the text file
+	string mostPopularName() {
+		string most_pop_name;
+		int name_instances_lead = 0;
+		int name_instances_compared;
+		int counter = 0;
+		for (int i = 0; i < unique_names_index; i++) {
+			for (int j = 0; j < baby_index; j++) {
+				if (unique_names[i] == baby_ds[j].name) {
+					//+1 for each time we encounter a name equal to the name in the unique list
+					counter++;
+				}//end if the names are the same
+			}//end baby index
+			 //compared value is equal to counter
+			name_instances_compared = counter;
+			//for when there are no values to compare
+			if (i == 0) {
+				name_instances_lead = counter;
+				most_pop_name = unique_names[0];
+			}//end if
+			else if (name_instances_compared > name_instances_lead) {
+				name_instances_lead = name_instances_compared;
+				most_pop_name = unique_names[i];
+			}//end else if
+			counter = 0;
+		}//end or loop unique names list 
+		return most_pop_name; // TO BE COMPLETED
+	}//end most popular name function
+	 ///////////////////////////////////////////////////////////////////////////////
+	 // return the number of baby records loaded from the text file
+	int numberOfBirths() {
+		return baby_index;
+	}//return number of births
+	 ///////////////////////////////////////////////////////////////////////////////
+	 // return the number of babies who had birth weight < 2500 grams
+	int numberOfBabiesWithLowBirthWeight() {
+		return low_BW;
+	}//end return number of babies with low birth weights
+	 ///////////////////////////////////////////////////////////////////////////////
+	 // return the number of babies who have the name contained in string s
+	int numberOfBabiesWithName(string s) {
+		int counter = 0;
+		for (int i = 0; i < baby_index; i++) {
+			if (s == baby_ds[i].name) {
+				counter++;
+			}//end if 
+		}//end for loop
+		return counter;
+	}//end number of babies with a nmae
+	 ///////////////////////////////////////////////////////////////////////////////
+	void print() {
+		for (int i = 0; i < baby_index; i++) {
+			cout << baby_ds[i].name << "\t" << baby_ds[i].weight << endl;
+		}//end for loop
+	}//end print function
+	 ///////////////////////////////////////////////////////////////////////////////
+private:
+	// update the data structure with information contained in Baby object
+	void addEntry(Baby b) {
+		baby_ds[baby_index] = b;
+		baby_index++;
+	}//add baby to the data structure
+	 //PRIVATE VALUES
+	Baby * baby_ds;
+	int baby_index, low_BW, unique_names_index;
+	string * unique_names;
+};//END MEDICAL RECORD FUNCTION
+  ///////////////////////////////////////////////////////////////////////////////
+int main() {
+	try {
+		{
+			// test only the Baby class
+			Baby babyTest("Testname", 1000);
+			assert(babyTest.getName() == "Testname");
+			assert(babyTest.getWeight() == 1000);
+		}
+
+		{   // test full code with a small data file
+			MedicalRecord MR;
+			MR.buildMedicalRecordfromDatafile("baby_data_small.txt"); // build a medical record from the file of baby names and weights\
+
+			int nBirths = MR.numberOfBirths();
+			cout << "Number of births: " << nBirths << endl;
+			assert(nBirths == 10);
+
+			int nEmma = MR.numberOfBabiesWithName("Emma");
+			cout << "Number of babies with name Emma: " << nEmma << endl;
+			assert(nEmma == 2);
+
+			int nLow = MR.numberOfBabiesWithLowBirthWeight();
+			cout << "Number of babies with low birth weight: " << nLow << endl;
+			assert(nLow == 2);
+
+			string mostPopularName = MR.mostPopularName();
+			cout << "Most popular baby name: " << mostPopularName << endl;
+			assert(mostPopularName == "Sophia");
+		}
+
+		{   // test full code with a large data file
+			MedicalRecord MR;
+			MR.buildMedicalRecordfromDatafile("baby_data_large.txt"); // build a medical record from the file of baby names and weights\
+
+			int nBirths = MR.numberOfBirths();
+			cout << "Number of births: " << nBirths << endl;
+			assert(nBirths == 199604);
+
+			int nEva = MR.numberOfBabiesWithName("Eva");
+			cout << "Number of babies with name Eva: " << nEva << endl;
+			assert(nEva == 566);
+
+			int nLow = MR.numberOfBabiesWithLowBirthWeight();
+			cout << "Number of babies with low birth weight: " << nLow << endl;
+			assert(nLow == 15980);
+
+			string mostPopularName = MR.mostPopularName();
+			cout << "Most popular baby name: " << mostPopularName << endl;
+			assert(mostPopularName == "Emma");
+		}
+	}
+	catch (exception &e) {
+		cout << e.what() << endl;
+	}
+
+	return 0;
+}
