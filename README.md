@@ -1,5 +1,3 @@
-CSUF CPSC 131, Spring 2017
-Project 1
+Arshya Sharifian
 
-Group members:
-Arshya Sharifian arshyasharifian@csu.fullerton.edu
+Yo yo
