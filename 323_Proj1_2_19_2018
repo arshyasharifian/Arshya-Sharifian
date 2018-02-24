@@ -1,176 +1,131 @@
 #include <iostream>
-#include <fstream>
 #include <string>
-#include <vector>
+#include <fstream>
 using namespace std;
 
 
-/*
-Pg. 58 = PS code
-String vectors for keywords, operators, separators, reading
-PS:
-char p;
-<if p is ! ignore until we reach another !>
-<separate each item using spaces and store in reading>
-<determine word category and output category>
-<if it doesn't meet one of the 28 RE states, its not valid>
+void m_id_key(char *&p, string * keyword){
+    bool check_keyword = false;
+    string word = "";
+    word+=*p;
+    p++;
+    while (((isalpha(*p) || isdigit(*p)) || (*p)=='$')){
+        word+=*p;
+        if ((*p) == '$'){
+            p++;
+            break;
+        }
+        p++;
+        
+    }//end while
+    //check ID first
+    if (word[word.length()-1] == '$')
+        cout << word << "\t identifier" << endl;
+    else if (isalpha(word[word.length()-1])){
+        //for loop to check for keyword
+        for (int i = 0; i < 13; i++){
+            if (word == keyword[i]){
+                cout << word << "\t keyword" << endl;
+                check_keyword = true;
+            }//end if keyword
+        }//end for
+        if (!check_keyword){
+            cout << word << "\t identifier" << endl;
+        }//end else if id
+    }//end else if
+    else cout << endl << word << ":  is an error" << endl;
+ }//end function
 
-*/
-
-bool check_ID(string file_word, string keywords[]) {
-	//does it begin with a char
-
-	//if it isn't a keyword
-	for (int i = 0; i < 13; i++) {
-		if (file_word == keywords[i]) {
-			cout << file_word << " is a keyword" << endl;
-		}
-		return false;
-	}
-	if (isalpha(file_word[0])) {
-		int last_letter_index = file_word.length() - 1;
-		//does it end with a char or $
-		if (isalpha(file_word[last_letter_index]) || file_word[last_letter_index] == '$') {
-			return true;
-		}
-	}//end isalpha first char
-
-	 //its something else, probably error
-	return false;
-}
-bool check_Int(string file_word) {
-	//check if its a real number
-	int end = file_word.length() - 1;
-	int state = 1;
-	for (int i = 0; i <= end; i++) {
-		if (isdigit(file_word[i])) state = 1;
-		else if (file_word[i] == '.') state = 2;
-		else {
-			cout << file_word[i] << ": don't know what this is, I am in check_Int" << endl;
-			return false;
-		}
-	}
-	cout << file_word << " is a real number" << endl;
-	return true;
-}//end check_Int
-bool m_ID(string input, string keywords[]) {
-	int current_state = 0;
-	int end = input.length() - 1;
-	//does it match rat ID basic requirements
-	if (check_ID(input, keywords) == false) return false;
-	//otherwise check if its a keyword?
-	for (int i = 0; i <= end; i++) {
-		if (isalpha(input[i])) {
-			current_state = 1;
-		}
-		else if (isdigit(input[i])) {
-			current_state = 2;
-		}
-		else if (input[i] == '$') {
-			current_state = 3;
-		}
-	}//end for loop
-
-	if ((current_state == 1) || (current_state == 3)) {
-		cout << input << " is an ID " << endl;
-		return true;
-	}
-	else return false;
+void m_int_real(char*&p){
+    string word = "";
+    string word_past_dec="";
+    word+=*p;
+    p++;
+    while (isdigit(*p)){
+        word+=*p;
+        p++;
+    }//end while is digit part 1
+    if (*p == '.'){
+        word+=*p;
+        p++;
+        while (isdigit(*p)){
+            word_past_dec+=*p;
+            p++;
+            
+        }//end while is digit part 2
+        if (word_past_dec.length() >=2){
+            word+=word_past_dec;
+            cout << word << "\t real number" << endl;
+        }
+        else cout << "error" << endl;
+    }//end if decimal
+    else{
+        cout << word << "\t integer" << endl;
+    }//end else not decimal
 }//end function
-bool m_Int(string input) {
-	int state = 1;
-	int end = input.length() - 1;
-	for (int i = 0; i <= end; i++) {
-		if (isdigit(input[i])) state = 1;
-		//else check if real # 
-	}
-	cout << input << " is an Int " << endl;
-	return (state == 1);
+
+bool is_sep(char *&p, char * sep){
+    for (int i = 0; i < 9; i++){
+        if ((*p) == sep[i]){
+            cout << *p << "\t\tseparator" << endl;
+            ++p;
+            return true;
+        }//end if
+    }
+    return false;
 }
-bool check_ope(char file_char, char ope[]) {
-	for (int i = 0; i < 8; i++) {
-		if (file_char == ope[i]) {
-			cout << endl<< file_char << " is an operator " << endl;
-			return true;
-		}
-	}
-	return false;
-}
-bool check_sep(char file_char, char sep[]) {
-	for (int i = 0; i < 6; i++) {
-		if (file_char == sep[i]) {
-			cout << endl << file_char << " is a separator" << endl;
-			return true;
-		}
-	}
-}
-//should attempt to pass a file pointer to avoid printing last ! in main
-bool check_com(char file_char) {
-	if (file_char == '!') {
-		return true;
-	}
-	return false;
-}
+
+bool is_op(char *&p, char * ope){
+    string word_ope = "";
+    for (int i = 0; i < 8; i++){
+        if (*p == ope[i]){
+            word_ope+=*p;
+            ++p;
+            for (int k = 0; k < 8; k++){
+                if (*p == ope[k]){
+                    word_ope+=*p;
+                    ++p;
+                    break;
+                }//end if
+            }//end for k
+            cout << word_ope << "\t\t operator" << endl;
+            return true;
+        }//end if og is operator
+    }//end for i
+    return false;
+}//end function
+
+
 int main() {
-	fstream fin;
-	bool comment = false;
-	bool id_verify = false;
-	string line, word = "";
-	char each_char;
-	fin.open("Rat_samp.txt");
-	string keywords[13] = { "int","boolean","real","function","return","true",
-		"false","if","else","endif","while","get","put", };
-	char separators[6] = { '(',')',':',',','{','}' };
-	char operators[8] = { '<','>','=','^','+','-','*','/' };
-	//cout << m_ID(input, operators, separators) << endl;
-
-	//while (x>=2)
-
-	char * p;
-
-	while (getline(fin, line)) {
-		//cout << line << endl;
-		p = &line[0];
-		for (int i = 0; i < line.length(); i++) {
-			cout << p[i];
-
-		}
-
-	}
-	/*
-	FILE * pFile;
-	int c;
-	char buffer[256];
-
-	pFile = fopen("myfile.txt", "rt");
-	if (pFile == NULL) perror("Error opening file");
-	else while (!feof(pFile)) {
-		c = getc(pFile);
-		if (c == EOF) break;
-		if (c == '#') ungetc('@', pFile);
-		else ungetc(c, pFile);
-		if (fgets(buffer, 255, pFile) != NULL)
-			fputs(buffer, stdout);
-		else break;
-	}
-	*/
-
-	/*
-	while (fin.get(each_char)) {
-		//if a comment, continue till we reach end of comment
-		if (check_com(each_char)) {
-			do {
-				fin.get(each_char);
-			} while (check_com(each_char) == false);
-			//for last !
-			fin.get(each_char);
-		}//end if		
-		
-	
-
-
-	}//end while
-	*/
-	system("pause");
-	return 0;
+    
+    string keywords[13] = { "int","boolean","real","function","return","true",
+        "false","if","else","endif","while","get","put", };
+    char separators[9] = { '(',')',':',',','{','}', ']', '[', ';' };
+    char operators[8] = { '<','>','=','^','+','-','*','/' };
+    
+    fstream fin;
+    char * p;
+    string x;
+    fin.open("test.txt");
+    while (getline(fin, x)){
+        p = &x[0];
+        while (p!=&x[x.length()]){
+            if (isalpha(*p))m_id_key(p, keywords);
+            else if (isdigit(*p))m_int_real(p);
+            else if (is_op(p, operators)){}
+            else if (is_sep(p, separators)){}
+            else if (((*p)==32) || (*p=='\t')){++p;}
+            else{
+                cout << "unknown\t" << *p << endl;;
+                p++;
+                
+            }
+        }
+        
+    }
+    
+    
+    
+    
+    return 0;
 }
