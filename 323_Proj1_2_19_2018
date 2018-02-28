@@ -3,23 +3,32 @@
 #include <fstream>
 using namespace std;
 
-void writetofile(string x, string lexeme)
+void writetofile(string x, string lexeme) // write to file and append it
 {
-    ofstream outfile;
-    outfile.open("output.txt", ios::app);
-    
-    outfile << x <<"\t\t"<<lexeme<< endl;
-    outfile.close();
-    
+	ofstream outfile;
+	outfile.open("output.txt", ios::app); 
+	
+	outfile << x <<"\t\t"<<lexeme<< endl;
+	outfile.close();
+
 }
-void writetofile_(char *x, string lexeme)
+void writetofile_(char *x, string lexeme) //write to file and append it
 {
-    ofstream outfile;
-    outfile.open("output.txt", ios::app);
-    
-    outfile << *x <<"\t\t"<<lexeme<< endl;
-    outfile.close();
-    
+	ofstream outfile;
+	outfile.open("output.txt", ios::app);
+	
+	outfile << *x <<"\t\t"<<lexeme<< endl;
+	outfile.close();
+
+}
+void writetofile(char x, string lexeme) //write to file and append it
+{
+	ofstream outfile;
+	outfile.open("output.txt", ios::app);
+
+	outfile << x << "\t\t" << lexeme << endl;
+	outfile.close();
+
 }
 
 void m_id_key(char *&p, string * keyword) {
@@ -196,10 +205,12 @@ int main() {
                 ++p;
             }
             else {
-                cout << *p << "\tunknown" << endl;
-                writetofile(		p, "unknown");
-                p++;
-            }
+				cout << "unknown\t" << *p << endl;
+				char tmp = p[0];
+				writetofile(tmp, "\t unknown");
+				p++;
+
+			}
         }//end while  p is within length
     }//end while getline
     fin.close();
