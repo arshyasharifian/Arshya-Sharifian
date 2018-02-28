@@ -3,207 +3,195 @@
 #include <fstream>
 using namespace std;
 
-void writetofile(string x, string lexeme)
+void writetofile(string x, string lexeme) // write to file and append it
 {
-    ofstream outfile;
-    outfile.open("output.txt", ios::app);
-    
-    outfile << x <<"\t\t"<<lexeme<< endl;
-    outfile.close();
-    
+	ofstream outfile;
+	outfile.open("output.txt", ios::app); 
+	
+	outfile << x <<"\t\t"<<lexeme<< endl;
+	outfile.close();
+
 }
-void writetofile_(char *x, string lexeme)
+void writetofile_(char *x, string lexeme) //write to file and append it
 {
-    ofstream outfile;
-    outfile.open("output.txt", ios::app);
-    
-    outfile << *x <<"\t\t"<<lexeme<< endl;
-    outfile.close();
-    
+	ofstream outfile;
+	outfile.open("output.txt", ios::app);
+	
+	outfile << *x <<"\t\t"<<lexeme<< endl;
+	outfile.close();
+
 }
+void writetofile(char x, string lexeme) //write to file and append it
+{
+	ofstream outfile;
+	outfile.open("output.txt", ios::app);
+
+	outfile << x << "\t\t" << lexeme << endl;
+	outfile.close();
+
+}
+
+
 
 void m_id_key(char *&p, string * keyword) {
-    //since starting state is 1 and entering this function requires a letter input
-    bool found_keyword = false;
-    int state = 2;
-    string word = "";
-    int id_FSM[5][4]{
-      //state   L   D   $
-        1,      2,  3,  5,
-        2,      4,  3,  5,
-        3,      4,  3,  5,
-        4,      4,  3,  5,
-        5,      -1, -1, -1,
-    };
-    
-    //while valid input
-    while ((((isalpha(*p)) || (isdigit(*p))) || (*p == '$')) && (state != -1)){
-        if (isalpha(*p)){
-            state = id_FSM[state-1][1];
-        }//end if alpha
-        else if (isdigit(*p)){
-            state = id_FSM[state-1][2];
-        }//end else if
-        else{
-            state = id_FSM[state-1][3];
-        }//end else '$'
-        word+=*p;
-        ++p;
-    }//end while
-    
-    //if accepting state
-    if (((state == 2) || (state == 4)) || (state == 5)){
-        //check if keyword
-        for (int i = 0; i < 13; i++){
-            if (word == keyword[i]){
-                found_keyword = true;
-                writetofile(word, "\tkeyword");
-                cout << word << "\tkeyword" << endl;
-            }//end if keyword
-        }//end key for
-        if (!found_keyword){
-            writetofile(word, "\tidentifier");
-            cout << word << "\tidentifier" << endl;
-        }
-    }//end if accepting state
-    //if not accepting state
-    else{
-        writetofile(word, "\tunknown");
-        cout << word << "\tunknown" << endl;
-    }//end not accepting state
+	bool check_keyword = false;
+	string word = "";
+	word += *p;
+	p++;
+	while (((isalpha(*p) || isdigit(*p)) || (*p) == '$')) {
+		word += *p;
+		if ((*p) == '$') {
+			p++;
+			break;
+		}
+		p++;
 
+	}//end while
+	 //check ID first
+	if (word[word.length() - 1] == '$')
+	{
+		cout << word << "\t identifier" << endl;
+		writetofile(word, "\t identifier");
+	}
+	else if (isalpha(word[word.length() - 1])) {
+		//for loop to check for keyword
+		for (int i = 0; i < 13; i++) {
+			if (word == keyword[i]) {
+				cout << word << "\t keyword" << endl;
+				writetofile(word, "\t keyword");
+				check_keyword = true;
+			}//end if keyword
+		}//end for
+		if (!check_keyword) {
+			cout << word << "\t identifier" << endl;
+			writetofile(word, "\t identifier");
+		}//end else if id
+	}//end else if
+	else
+	{
+		cout << endl << word << "unknown" << endl;
+		writetofile(word, "unknown");
+	}
 }//end function
- 
+
 void m_int_real(char*&p) {
-    string word = "";
-    string word_past_dec = "";
-    word += *p;
-    p++;
-    while (isdigit(*p)) {
-        word += *p;
-        p++;
-    }//end while is digit part 1
-    if (*p == '.') {
-        word += *p;
-        p++;
-        while (isdigit(*p)) {
-            word_past_dec += *p;
-            p++;
-            
-        }//end while is digit part 2
-        if (word_past_dec.length() >= 2) {
-            word += word_past_dec;
-            cout << word << "\t real number" << endl;
-            writetofile(word, "realNumber");
-        }
-        else cout << "error" << endl;
-    }//end if decimal
-    else {
-        cout << word << "\t integer" << endl;
-        writetofile(word, "integer");
-    }//end else not decimal
+	string word = "";
+	string word_past_dec = "";
+	word += *p;
+	p++;
+	while (isdigit(*p)) {
+		word += *p;
+		p++;
+	}//end while is digit part 1
+	if (*p == '.') {
+		word += *p;
+		p++;
+		while (isdigit(*p)) {
+			word_past_dec += *p;
+			p++;
+
+		}//end while is digit part 2
+		if (word_past_dec.length() >= 2) {
+			word += word_past_dec;
+			cout << word << "\t real number" << endl;
+			writetofile(word, "\t realNumber");
+		}
+		else cout << "error" << endl;
+	}//end if decimal
+	else {
+		cout << word << "\t integer" << endl;
+		writetofile(word, "\t integer");
+	}//end else not decimal
 }//end function
 
 bool is_sep(char *&p, char * sep) {
-    for (int i = 0; i < 10; i++) {
-        if ((*p) == sep[i]) {
-            cout << *p << "\t\tseparator" << endl;
-            writetofile_(p,"\t separator");
-            ++p;
-            return true;
-
-            /*
-            //if p is %, check if ++p is also %
-            if (*p == '%'){
-                string word = "";
-                word+=*p;
-                ++p;
-                if (*p == '%'){
-                    word+=*p;
-                    writetofile(word, "\tseparator");
-                    ++p;
-                }//if % part 2
-            }//if % part 1
-            else{
-                writetofile_(p,"\t separator");
-                ++p;
-            }//else not %
-             */
-        }//end if separator
-    }//end for
-    return false;
-}//end function
+	for (int i = 0; i < 9; i++) {
+		if ((*p) == sep[i]) {
+			cout << *p << "\t\tseparator" << endl;
+			writetofile_(p,"\t separator");
+			++p;
+			return true;
+		}//end if
+	}
+	return false;
+}
 
 bool is_op(char *&p, char * ope) {
-    string word_ope = "";
-    for (int i = 0; i < 8; i++) {
-        if (*p == ope[i]) {
-            word_ope += *p;
-            ++p;
-            for (int k = 0; k < 8; k++) {
-                if (*p == ope[k]) {
-                    word_ope += *p;
-                    ++p;
-                    break;
-                }//end if
-            }//end for k
-            cout << word_ope << "\t\t operator" << endl;
-            writetofile(word_ope, "operator");
-            return true;
-        }//end if og is operator
-    }//end for i
-    return false;
+	string word_ope = "";
+	for (int i = 0; i < 8; i++) {
+		if (*p == ope[i]) {
+			word_ope += *p;
+			++p;
+			for (int k = 0; k < 8; k++) {
+				if (*p == ope[k]) {
+					word_ope += *p;
+					++p;
+					break;
+				}//end if
+			}//end for k
+			cout << word_ope << "\t\t operator" << endl;
+			writetofile(word_ope, "\t operator");
+			return true;
+		}//end if og is operator
+	}//end for i
+	return false;
 }//end function
 
 
 int main() {
-    
-    string keywords[13] = { "int","boolean","real","function","return","true",
-        "false","if","else","endif","while","get","put" };
-    char separators[10] = { '(',')',':',',','{','}', ']', '[', ';', '%' };
-    char operators[8] = { '<','>','=','^','+','-','*','/' };
-    
-    fstream fin;
-    char * p;
-    string x;
-    fin.open("TestCase_1.txt");
-    ofstream outfile;
-    outfile.open("output.txt");
-    outfile << "token\t\t" << "lexeme"<<endl;
-    outfile << "------------------------------------------\n";
-    outfile.close();
-    while (getline(fin, x)) {
-        p = &x[0];
-        while (p != &x[x.length()]) {
-            if (isalpha(*p))m_id_key(p, keywords);
-            else if (isdigit(*p))m_int_real(p);
-            else if (is_op(p, operators)) {}
-            else if (is_sep(p, separators)) {}
-            else if ((((*p) == 32) || (*p == '\t')) || ((*p=='\n') || (int)(*p) == 13)) { ++p; }
-            else if (*p == '!')
-            {
-                ++p;
-                while (*p != '!')
-                {
-                    if (p != &x[x.length()])
-                        ++p;
-                    else
-                    {
-                        getline(fin, x);
-                        p = &x[0];
-                    }
-                }
-                ++p;
-            }
-            else {
-                cout << *p << "\tunknown" << endl;
-                writetofile(		p, "unknown");
-                p++;
-            }
-        }//end while  p is within length
-    }//end while getline
-    fin.close();
-    outfile.close();
-    
-    return 0;
+
+	string keywords[] = { "int","boolean","real","function","return","true",
+		"false","if","else","endif","while","get","put" };
+	char separators[] = { '(',')',':',',','{','}', ']', '[', ';' };
+	char operators[] = { '<','>','=','^','+','-','*','/' };
+
+	fstream fin;
+	char * p;
+	string x;
+	fin.open("TestCase_2.txt");
+	ofstream outfile;
+	outfile.open("output.txt");
+	outfile << "token\t\t" << "\t lexeme"<<endl;
+	outfile << "------------------------------------------\n";
+	outfile.close();
+	while (getline(fin, x)) {
+		p = &x[0];
+		while (p != &x[x.length()]) {
+			if (isalpha(*p))m_id_key(p, keywords);
+			else if (isdigit(*p))m_int_real(p);
+			else if (is_op(p, operators)) {}
+			else if (is_sep(p, separators)) {}
+			else if (((*p) == 32) || (*p == '\t')) { ++p; }
+			else if (*p == '!')
+			{
+				++p;
+				while (*p != '!')
+				{
+					
+					if (p != &x[x.length()])
+						++p;
+					else
+					{
+						getline(fin, x);
+						p = &x[0];
+					}
+				}
+				++p;
+			}
+			else {
+				cout << "unknown\t" << *p << endl;
+				char tmp = p[0];
+				writetofile(tmp, "\t unknown");
+				p++;
+
+			}
+		}
+
+	}
+	fin.close();
+	//outfile.close();
+
+	system("Pause");
+	return 0;
 }
+
