@@ -19,7 +19,6 @@ void writetofile_(char *x, string lexeme)
     
     outfile << *x <<"\t\t"<<lexeme<< endl;
     outfile.close();
-    
 }
 
 void writetofile(char x, string lexeme) //write to file and append it
@@ -29,7 +28,6 @@ void writetofile(char x, string lexeme) //write to file and append it
     
     outfile << x << "\t\t" << lexeme << endl;
     outfile.close();
-    
 }
 
 void m_id_key(char *&p, string * keyword) {
@@ -127,7 +125,6 @@ void m_int_real(char*&p) {
         writetofile(word, "unknown");
     }
 }//end function
-
 
 bool is_sep(char *&p, char * sep) {
     string word = "";
