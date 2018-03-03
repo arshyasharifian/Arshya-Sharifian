@@ -228,6 +228,13 @@ int main() {
     cin >> file_name;
     fin.open(file_name);
     
+    //while unable to open file prompt user to re-enter file name
+    while (!(fin.is_open())){
+        cout << "Unable to open file; please re-enter file name" << endl;
+        cin >> file_name;
+        fin.open(file_name);
+    }
+    
     //creating and formatting output file
     ofstream outfile("output.txt");
     outfile << setw(10)<<"token"<<"\t\t\t" << "lexeme" <<endl;
