@@ -11,22 +11,31 @@ void writetofile(ofstream& ofs, T& x, string lexeme) {
     ofs << setw(10) << x << "\t\t\t" << lexeme << endl;
 }
 template <typename T>
-void writetofile(T* x, string lexeme) { writetofile(*x, lexeme); }
+void writetofile(T* x, string lexeme) {
+    //cout << *x << endl;
+    writetofile(*x, lexeme);
+}
 
 
 void m_id_key(ofstream& ofs, char *&p, string * keyword) {
     //since starting state is 1 and entering this function requires a letter input
-    bool found_keyword = false;
     int state = 2;
+    bool found_keyword = false;
     string word = "";
+    /*
+    A finite state machine for identifiers and keywords;
+     will continue checking character inputs as long as
+     they are valid inputs (letter, digit, $).  
+     Accepting states 2, 4, 5
+    */
     int id_FSM[6][4]{
         //state   L   D   $
-        1,      2,  3,  5,
-        2,      4,  3,  5,
-        3,      4,  3,  5,
-        4,      4,  3,  5,
-        5,      6,  6,  6,
-        6,      6,  6,  6
+        1,        2,  3,  5,
+        2,        4,  3,  5,
+        3,        4,  3,  5,
+        4,        4,  3,  5,
+        5,        6,  6,  6,
+        6,        6,  6,  6
     };
     
     //while valid input
@@ -51,18 +60,15 @@ void m_id_key(ofstream& ofs, char *&p, string * keyword) {
             if (word == keyword[i]) {
                 found_keyword = true;
                 writetofile(ofs, word, "keyword");
-                
-            }//end if keyword
-        }//end key for
+            }
+        }
         if (!found_keyword) {
             writetofile(ofs, word, "identifier");
-            
         }
-    }//end if accepting state
-    //if not accepting state
+    }
+    
     else {
         writetofile(ofs, word, "error");
-        
     }//end not accepting state
     
 }//end function
@@ -97,43 +103,46 @@ void m_int_real(ofstream& ofs, char*&p) {
     }//end while valid input
     
     if ((state == 2) || (state == 3)) {
-        cout << word << "\t\t\tinteger" << endl;
+        //cout << word << "\t\t\tinteger" << endl;
         writetofile(ofs, word, "integer");
     }
     else if (state == 6) {
-        cout << word << "\t\t\treal" << endl;
+        //cout << word << "\t\t\treal" << endl;
         writetofile(ofs, word, "real");
     }
     else {
-        cout << word << "\t\t\tunknown" << endl;
+        //cout << word << "\t\t\tunknown" << endl;
         writetofile(ofs, word, "unknown");
     }
 }//end function
 
 bool is_sep(ofstream& ofs, char *&p, char * sep) {
-    string word = "";
-    for (int i = 0; i < 10; i++) {
-        if ((*p) == sep[i]) {
-            if (*p == '%') {
-                word += *p;
-                ++p;
-                if (*p == '%') {
-                    word += *p;
-                    cout << word << "\t\t\tseparator" << endl;
-                    writetofile(ofs, word, " separator");
+    for (int i = 0; i < 10; i++){
+        if (*p == sep[i]){
+            if (*p == '%'){
+                if (*(++p) == '%'){
+                    //cout << "%%\t\t\t1separator" << endl;
+                    writetofile(ofs, "%%","separator");
                     ++p;
                     return true;
-                }//end if second char is a %
-                //if next character isn't %, then there is an error
-                cout << word << "\t\t\terror" << endl;
-                writetofile(ofs, word, " error");
+                }//end second p is also %
+                else{
+                    //decrement to original p
+                    --p;
+                    //cout << *(--p) << "\t\t\t2error" << endl;
+                    char tmp = p[0];
+                    writetofile(ofs, tmp,"error");
+                    ++p;
+                    return true;
+                }//end else second p not %
+            }//end first p
+            else{
+                //cout << *p << "\t\t\t3separator" << endl;
+                char tmp = p[0];
+                writetofile(ofs, tmp,"separator");
+                ++p;
                 return true;
-            }//end if p is a %
-            char tmp = p[0];
-            cout << *p << "\t\t\tseparator" << endl;
-            writetofile(ofs, tmp, "separator");
-            ++p;
-            return true;
+            }//else not % but still separator
         }//end if separator
     }//end for
     return false;
@@ -171,7 +180,7 @@ int main() {
     fstream fin;
     char * p;
     string x;
-    fin.open("TestCase_2.txt");
+    fin.open("TestCase_3.txt");
     ofstream outfile("output.txt");
     
     outfile << setw(10)<<"token"<<"\t\t\t" << "lexeme" <<endl;
@@ -201,7 +210,7 @@ int main() {
                 ++p;
             }
             else {
-                cout << *p << "\t\t\tunknown" << endl;
+                //cout << *p << "\t\t\tunknown" << endl;
                 char tmp = p[0];
                 writetofile(outfile, tmp, "error");
                 ++p;
