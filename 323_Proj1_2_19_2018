@@ -1,10 +1,10 @@
 #include <iostream>
 #include <string>
 #include <fstream>
-#include<iomanip>
+#include <iomanip>
 using namespace std;
 
-//struct for holding lexer output
+//struct for holding LA record
 struct LA_output{
     string token;   //category
     string lexeme;  //actual
@@ -13,14 +13,12 @@ struct LA_output{
 //functions to write to file
 template <typename T>
 void writetofile(ofstream& ofs, T& x, string token, LA_output & val) {
-    //cout << x << "\t\t" << token << endl;
     val.lexeme = x;
     val.token = token;
     ofs << setw(10) << x << "\t\t\t" << token << endl;
 }
 template <typename T>
 void writetofile(T* x, string token, LA_output & val) {
-    //cout << *x << endl;
     val.lexeme = x;
     val.token = token;
     writetofile(*x, token);
@@ -49,18 +47,15 @@ void m_id_key(ofstream& ofs, char *&p, string * keyword, LA_output & val) {
     
     //while valid input
     while (((isalpha(*p)) || (isdigit(*p))) || (*p == '$')) {
-        if (isalpha(*p)) {
+        if (isalpha(*p))
             state = id_FSM[state - 1][1];
-        }//end if alpha
-        else if (isdigit(*p)) {
+        else if (isdigit(*p))
             state = id_FSM[state - 1][2];
-        }//end else if
-        else {
+        else
             state = id_FSM[state - 1][3];
-        }//end else '$'
         word += *p;
         ++p;
-    }//end while
+    }
     
     //if accepting state
     if (((state == 2) || (state == 4)) || (state == 5)) {
@@ -77,28 +72,28 @@ void m_id_key(ofstream& ofs, char *&p, string * keyword, LA_output & val) {
     }
     //not accepting state
     else
-        writetofile(ofs, word, "error", val);
-}//end function
+        writetofile(ofs, word, "unknown", val);
+}
 
 //determines whether the input characters are integers or real numbers
 void m_int_real(ofstream& ofs, char*&p, LA_output & val) {
     int state = 2; //set to 2 since input char was a digit
     /*
      combination of integer and real number FSM
-     states 2 and 3 are accepting states for integer numbers
-     state 6 is the accepting state for real numbers
-     state 7 is an error state.
+     states 2 is accepting states for integer numbers
+     state 4 is the accepting state for real numbers
+     state 5 is an error state.
      */
-    int int_real_FSM[8][4]{
-        //state     D   .   else
-        1,          2,  7,  7,
-        2,          3,  7,  7,
-        3,          3,  4,  7,
-        4,          5,  7,  7,
-        5,          6,  7,  7,
-        6,          6,  7,  7,
-        7,          7,  7,  7
+    
+    int int_real_FSM[5][3]{
+        //state     D   .
+        1,          2,  5,
+        2,          2,  3,
+        3,          4,  5,
+        4,          4,  5,
+        5,          5,  5,
     };
+    
     string word = "";
     //while valid input
     while (isdigit(*p) || (*p) == '.') {
@@ -108,15 +103,15 @@ void m_int_real(ofstream& ofs, char*&p, LA_output & val) {
             state = int_real_FSM[state - 1][2];
         word += *p;
         ++p;
-    }//end while valid input
+    }
     
-    if ((state == 2) || (state == 3))
+    if (state == 2)
         writetofile(ofs, word, "integer", val);
-    else if (state == 6)
+    else if (state == 4)
         writetofile(ofs, word, "real", val);
     else
         writetofile(ofs, word, "unknown", val);
-}//end function
+}
 
 //determines if the character is a separator
 bool is_sep(ofstream& ofs, char *&p, char * sep, LA_output & val) {
@@ -133,7 +128,7 @@ bool is_sep(ofstream& ofs, char *&p, char * sep, LA_output & val) {
                     //decrement to original p for error message
                     --p;
                     char tmp = p[0];
-                    writetofile(ofs, tmp,"error", val);
+                    writetofile(ofs, tmp,"unknown", val);
                     ++p;
                     return true;
                 }
@@ -160,7 +155,7 @@ bool is_op(ofstream& ofs, char *&p, char * ope, LA_output & val) {
                 if (*p == ope[k]) {
                     word_ope += *p;
                     ++p;
-                    break; //if found leave the loop
+                    break; //if operator found leave the loop
                 }
             }
             writetofile(ofs, word_ope, "operator", val);
@@ -168,19 +163,10 @@ bool is_op(ofstream& ofs, char *&p, char * ope, LA_output & val) {
         }
     }
     return false;
-}//end function
-
-//the lexer function
-LA_output lexer(char *& p, ofstream & outfile, fstream & fin, string * keywords,
-         string & x, char * operators, char * separators){
-    LA_output ex;
-    if (isalpha(*p))m_id_key(outfile, p, keywords, ex);
-    else if (isdigit(*p))m_int_real(outfile, p, ex);
-    else if (is_op(outfile, p, operators, ex)) {}
-    else if (is_sep(outfile, p, separators, ex)) {}
-    else if ((((*p) == 32) || (*p == '\t')) || ((*p == '\n') || (int)(*p) == 13)) { ++p; }
-    else if (*p == '!')
-    {
+}
+//checks for comments
+bool is_comment(char *&p, fstream & fin, string & x){
+    if (*p == '!'){
         ++p;
         while (*p != '!')
         {
@@ -193,45 +179,70 @@ LA_output lexer(char *& p, ofstream & outfile, fstream & fin, string * keywords,
             }
         }
         ++p;
+        return true;
     }
+    return false;
+}
+
+//the lexer function considers all valid inputs
+LA_output lexer(char *& p, ofstream & outfile, fstream & fin, string * keywords,
+         string & x, char * operators, char * separators){
+    LA_output ex;
+    if (isalpha(*p))m_id_key(outfile, p, keywords, ex);
+    else if (isdigit(*p))m_int_real(outfile, p, ex);
+    else if (is_op(outfile, p, operators, ex)) {}
+    else if (is_sep(outfile, p, separators, ex)) {}
+    else if ((((*p) == 32) || (*p == '\t')) || ((*p == '\n') || (int)(*p) == 13)) {++p;}
+    else if (is_comment(p, fin, x)){}
     else {
         char tmp = p[0];
-        writetofile(outfile, tmp, "error", ex);
+        writetofile(outfile, tmp, "unknown", ex);
         ++p;
     }
     return ex;
-}//end lexer function
-
-
+}
 
 int main() {
     
+    //valid keywords, separators, and operators
     string keywords[13] = { "int","boolean","real","function","return","true",
         "false","if","else","endif","while","get","put" };
     char separators[10] = { '(',')',':',',','{','}', ']', '[', ';', '%' };
     char operators[8] = { '<','>','=','^','+','-','*','/' };
+    
+    //read file
     fstream fin;
-    char * p;
-    string x;
+    
+    //candidate lexeme
+    char * lex_candid;
+    
+    //holds each input file line
+    string line_code;
     string file_name;
+    
+    //structure containing lexer function results
     LA_output record;
+    
+    //prompt user to enter file name
     cout << "What is the name of the txt file you want to test:  " << endl;
     cin >> file_name;
     fin.open(file_name);
-    ofstream outfile("output.txt");
     
+    //creating and formatting output file
+    ofstream outfile("output.txt");
     outfile << setw(10)<<"token"<<"\t\t\t" << "lexeme" <<endl;
     outfile << "--------------------------------------------------------------\n";
-    //	outfile.close();
-    while (getline(fin, x)) {
-        p = &x[0];
-        while (p != &x[x.length()]) {
+    
+    //while there are remaining code lines
+    while (getline(fin, line_code)) {
+        //point to the first character of line
+        lex_candid = &line_code[0];
+        while (lex_candid != &line_code[line_code.length()]) {
             //calling lexer and storing results
-            record = lexer (p, outfile, fin, keywords, x, operators, separators );
-            if (record.lexeme.length() > 0)
-                cout << record.token << "\t" << record.lexeme << endl;
+            record = lexer (lex_candid, outfile, fin, keywords, line_code, operators, separators );
         }
     }
+    
     fin.close();
     outfile.close();
     return 0;
