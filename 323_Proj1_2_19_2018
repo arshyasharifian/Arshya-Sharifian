@@ -33,17 +33,21 @@ void m_id_key(ofstream& ofs, char *&p, string * keyword, LA_output & val) {
     A finite state machine for identifiers and keywords;
      will continue checking character inputs as long as
      they are valid inputs (letter, digit, $).  
-     Accepting states 2, 4, 5
+     Accepting states 2, 3, 5
     */
+    
     int id_FSM[6][4]{
         //state   L   D   $
-        1,        2,  3,  5,
-        2,        4,  3,  5,
-        3,        4,  3,  5,
-        4,        4,  3,  5,
+        1,        2,  6,  6,
+        2,        3,  4,  5,
+        3,        3,  4,  5,
+        4,        3,  4,  5,
         5,        6,  6,  6,
         6,        6,  6,  6
+        
     };
+    
+    
     
     //while valid input
     while (((isalpha(*p)) || (isdigit(*p))) || (*p == '$')) {
@@ -58,7 +62,7 @@ void m_id_key(ofstream& ofs, char *&p, string * keyword, LA_output & val) {
     }
     
     //if accepting state
-    if (((state == 2) || (state == 4)) || (state == 5)) {
+    if (((state == 2) || (state == 3)) || (state == 5)) {
         //check if keyword
         for (int i = 0; i < 13; i++) {
             if (word == keyword[i]) {
@@ -84,7 +88,6 @@ void m_int_real(ofstream& ofs, char*&p, LA_output & val) {
      state 4 is the accepting state for real numbers
      state 5 is an error state.
      */
-    
     int int_real_FSM[5][3]{
         //state     D   .
         1,          2,  5,
