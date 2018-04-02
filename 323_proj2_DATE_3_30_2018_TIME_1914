@@ -23,6 +23,10 @@ void writetofile(T* x, string token, LA_output & val) {
     val.token = token;
     writetofile(*x, token);
 }
+
+void SA_output(ofstream & ofs, string production){
+    ofs << production;
+}
 ///////////////////////////////////////////////////////////////////////////////////
 void m_id_key(ofstream& ofs, char *&p, string * keyword, LA_output & val) {
     //since starting state is 1 and entering this function requires a letter input
@@ -30,12 +34,11 @@ void m_id_key(ofstream& ofs, char *&p, string * keyword, LA_output & val) {
     bool found_keyword = false;
     string word = "";
     /*
-    A finite state machine for identifiers and keywords;
+     A finite state machine for identifiers and keywords;
      will continue checking character inputs as long as
-     they are valid inputs (letter, digit, $).  
+     they are valid inputs (letter, digit, $).
      Accepting states 2, 3, 5
-    */
-    
+     */
     int id_FSM[6][4]{
         //state   L   D   $
         1,        2,  6,  6,
@@ -46,8 +49,6 @@ void m_id_key(ofstream& ofs, char *&p, string * keyword, LA_output & val) {
         6,        6,  6,  6
         
     };
-    
-    
     //while valid input
     while (((isalpha(*p)) || (isdigit(*p))) || (*p == '$')) {
         if (isalpha(*p))
@@ -59,7 +60,6 @@ void m_id_key(ofstream& ofs, char *&p, string * keyword, LA_output & val) {
         word += *p;
         ++p;
     }
-    
     //if accepting state
     if (((state == 2) || (state == 3)) || (state == 5)) {
         //check if keyword
@@ -77,7 +77,6 @@ void m_id_key(ofstream& ofs, char *&p, string * keyword, LA_output & val) {
     else
         writetofile(ofs, word, "unknown", val);
 }
-
 //determines whether the input characters are integers or real numbers
 void m_int_real(ofstream& ofs, char*&p, LA_output & val) {
     int state = 2; //set to 2 since input char was a digit
@@ -95,7 +94,6 @@ void m_int_real(ofstream& ofs, char*&p, LA_output & val) {
         4,          4,  5,
         5,          5,  5,
     };
-    
     string word = "";
     //while valid input
     while (isdigit(*p) || (*p) == '.') {
@@ -106,7 +104,6 @@ void m_int_real(ofstream& ofs, char*&p, LA_output & val) {
         word += *p;
         ++p;
     }
-    
     if (state == 2)
         writetofile(ofs, word, "integer", val);
     else if (state == 4)
@@ -202,8 +199,14 @@ bool is_comment(char *&p, fstream & fin, string & x){
 }
 
 //the lexer function considers all valid inputs
-LA_output lexer(char *& p, ofstream & outfile, fstream & fin, string * keywords,
-         string & x, char * operators, char * separators){
+LA_output lexer(char *& p, ofstream & outfile, fstream & fin, string & x){
+   
+    //valid keywords, separators, and operators
+    string keywords[13] = { "int","boolean","real","function","return","true",
+        "false","if","else","endif","while","get","put" };
+    char separators[10] = { '(',')',':',',','{','}', ']', '[', ';', '%' };
+    char operators[8] = { '<','>','=','^','+','-','*','/' };
+    
     LA_output ex;
     if (isalpha(*p))m_id_key(outfile, p, keywords, ex);
     else if (isdigit(*p))m_int_real(outfile, p, ex);
@@ -219,13 +222,56 @@ LA_output lexer(char *& p, ofstream & outfile, fstream & fin, string * keywords,
     return ex;
 }
 
-int main() {
+
+//SA Rules
+
+void empty(LA_output record){
     
-    //valid keywords, separators, and operators
-    string keywords[13] = { "int","boolean","real","function","return","true",
-        "false","if","else","endif","while","get","put" };
-    char separators[10] = { '(',')',':',',','{','}', ']', '[', ';', '%' };
-    char operators[8] = { '<','>','=','^','+','-','*','/' };
+}
+
+void primary(LA_output record, ofstream & ofs){
+    if (record.token == "identifier"){
+        cout << "match" << endl;
+        SA_output(ofs, "<primary> -> <identifier>");
+    }
+    if (record.token == "integer"){
+        SA_output(ofs, "<primary> -> <integer");
+    }
+}
+
+void factor (LA_output record, ofstream & ofs){
+    if (record.lexeme == "-"){
+        SA_output (ofs, "<Factor> -> - <primary>\n");
+    }
+    else {
+        SA_output (ofs, "<Factor> -> <primary>\n");
+    }
+    primary(record, ofs);
+}
+
+//still need to remove left recursion; just add empty as the last production
+void term (LA_output & record, ofstream & ofs){
+    if (record.lexeme == "*"){
+        SA_output (ofs, "<Term> *");
+    }
+    else if (record.lexeme == "/"){
+        SA_output (ofs, "<Term> /");
+    }
+    /*
+    else{
+     call lexer
+     pass value to factor
+     check if -
+     if not call primary and compare token types
+    }
+     */
+}
+
+void SA(char *&p, ofstream & outfile, fstream & fin, LA_output record, string & line_code){
+    factor(record, outfile);
+}
+
+int main() {
     
     //read file
     fstream fin;
@@ -263,7 +309,13 @@ int main() {
         lex_candid = &line_code[0];
         while (lex_candid != &line_code[line_code.length()]) {
             //calling lexer and storing results
-            record = lexer (lex_candid, outfile, fin, keywords, line_code, operators, separators );
+            record = lexer (lex_candid, outfile, fin, line_code);
+            
+            //pass record to the SA
+            //SA (lex_candid, outfile, fin, line_code, record);
+            //find rules
+            //return if token type matches with rule
+            
         }
     }
     
@@ -271,3 +323,4 @@ int main() {
     outfile.close();
     return 0;
 }
+
