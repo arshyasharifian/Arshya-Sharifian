@@ -7,116 +7,195 @@ using namespace std;
 
 //Node for simple tree
 struct Node{
-    int elem = -1;
+    char elem = 32;
     Node * left_child = NULL;
+    Node * middle_child = NULL;
     Node * right_child = NULL;
 };
 
 int main() {
     //first node
     Node * create_nodes = new Node;
-    create_nodes->elem = 3;
+    create_nodes->elem = 'A';
     Node root = *create_nodes;
-    
-    //second node
-    create_nodes = new Node;
-    create_nodes->elem = 2;
-    Node right = *create_nodes;
     
     //third node
     create_nodes = new Node;
-    create_nodes->elem = 1;
-    Node left = *create_nodes;
+    create_nodes->elem = 'B';
+    Node b = *create_nodes;
     
-    root.left_child = &left;
-    root.right_child = & right;
+    create_nodes = new Node;
+    create_nodes->elem = 'C';
+    Node c = *create_nodes;
+    
+    //second node
+    create_nodes = new Node;
+    create_nodes->elem = 'D';
+    Node d = *create_nodes;
+    
+    create_nodes = new Node;
+    create_nodes->elem = 'E';
+    Node e = *create_nodes;
+    
+    create_nodes = new Node;
+    create_nodes->elem = 'F';
+    Node f = *create_nodes;
+    
+    create_nodes = new Node;
+    create_nodes->elem = 'G';
+    Node g = *create_nodes;
+    
+    create_nodes = new Node;
+    create_nodes->elem = 'H';
+    Node h = *create_nodes;
+    
+    create_nodes = new Node;
+    create_nodes->elem = 'I';
+    Node i = *create_nodes;
+    
+    create_nodes = new Node;
+    create_nodes->elem = 'J';
+    Node j = *create_nodes;
+    
+    //connecting the nodes
+    c.right_child = &h;
+    c.left_child = &g;
+    
+    d.left_child = &i;
+    d.right_child = &j;
+    
+    b.right_child = &f;
+    b.left_child = &e;
+    
+    root.middle_child = &c;
+    root.left_child = &b;
+    root.right_child = &d;
     
     //serves as iterator
     create_nodes = &root;
     
-    //open array
+    //open is an array-based queue
     Node open[3];
     int open_counter = 0;
+    
     //first node is root node
     open[open_counter] = root;
     open_counter++;
     
-    //closed array
+    int bfs_index = 0;
+    
+    //closed is an array-based queue
     Node closed[3];
     int closed_counter = 0;
     
     //boolean to check if Node X children exist
     bool r_child_exists = false;
     bool l_child_exists = false;
+    bool m_child_exists = false;
     
     //SUCCESS value
-    int goal = 3;
+    char goal = 'k';
     
-    while (open_counter != 0){
+    while (bfs_index <= open_counter-1){
         //remove node x from open
-        open_counter--;
-        if (open[open_counter].elem == goal){
+        if (open[bfs_index].elem == goal){
             cout << "found" << endl;
             exit(0);
         }
        
         //checks if child exists
-        if (open[open_counter].right_child != NULL)
-            r_child_exists = true;
-        else
-            r_child_exists = false;
-       
-        if (open[open_counter].left_child != NULL)
+        if (open[bfs_index].left_child != NULL)
             l_child_exists = true;
         else
             l_child_exists = false;
         
+        if (open[bfs_index].middle_child != NULL)
+            m_child_exists = true;
+        else
+            m_child_exists = false;
+        
+        if (open[bfs_index].right_child != NULL)
+            r_child_exists = true;
+        else
+            r_child_exists = false;
+        
         //generate children of x
-        Node temp_r_child;
         Node temp_l_child;
+        Node temp_m_child;
+        Node temp_r_child;
         
-        if (r_child_exists) temp_r_child = *open[open_counter].right_child;
-        if (l_child_exists) temp_l_child = *open[open_counter].left_child;
+        if ((l_child_exists) && (open[bfs_index].left_child->elem != 32)) temp_l_child = *open[bfs_index].left_child;
+        if ((m_child_exists)  && (open[bfs_index].middle_child->elem != 32)) temp_m_child = *open[bfs_index].middle_child;
+        if ((r_child_exists)  && (open[bfs_index].right_child->elem != 32)) temp_r_child = *open[bfs_index].right_child;
         
-        //put x on closed
-        closed[closed_counter] = open[open_counter];
+        //put current node in closed queue
+        closed[closed_counter] = open[bfs_index];
         closed_counter++;
         
         //discard children of x if in either open or counter
         Node * check_l = &temp_l_child;
+        Node * check_m = &temp_m_child;
         Node * check_r = &temp_r_child;
         
         //checks open array
-        for (int i = 0; i < open_counter; i++){
-            if (check_l == &open[open_counter]){
-                temp_l_child.elem = -1;
+        for (int i = bfs_index; i < open_counter; i++){
+            if (check_l == &open[i]){
+                l_child_exists = false;
+                delete check_l;
             }//end if
-            if (check_r == &open[open_counter]){
-                temp_r_child.elem = -1;
+            if (check_m == &open[i]){
+                m_child_exists = false;
+                delete check_m;
+            }//end if
+            if (check_r == &open[i]){
+                r_child_exists = false;
+                delete check_r;
             }//end if
         }//end for loop
         
         //check closed array
         for (int i = 0; i < closed_counter; i++){
-            if (check_l == &closed[closed_counter]){
+            if (check_l == &closed[i]){
+                l_child_exists = false;
                 delete check_l;
             }//end if
-            if (check_r == &closed[closed_counter]){
+            if (check_m == &closed[i]){
+                m_child_exists = false;
+                delete check_m;
+            }//end if
+            if (check_r == &closed[i]){
+                r_child_exists = false;
                 delete check_r;
             }//end if
         }//end for loop
         
-        //adding to open if child exists
-        if (r_child_exists){
-            open[open_counter] = temp_r_child;
-            open_counter++;
-        }
+        //adding to open queue if child exists
         if (l_child_exists) {
             open[open_counter] = temp_l_child;
             open_counter++;
         }
+        if (m_child_exists) {
+            open[open_counter] = temp_m_child;
+            open_counter++;
+        }
+        if (r_child_exists){
+            open[open_counter] = temp_r_child;
+            open_counter++;
+        }
+        
+        bfs_index++;
+        cout << "open" << endl;
+        for (int i = bfs_index; i < open_counter; i++){
+            cout << open[i].elem << endl;
+        }
+        
+        cout << "closed" << endl;
+        for (int i = 0; i < closed_counter; i++){
+            cout << closed[i].elem << endl;
+        }
         
     }//end while
+    
     cout << "not found" << endl;
 
     return 0;
