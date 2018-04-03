@@ -13,132 +13,63 @@ struct Node {
     Node * right_child = NULL;
 };
 
-int main() {
-    //first node
+//function for creating a new node
+Node add_new_node(char elem){
     Node * create_nodes = new Node;
-    create_nodes->elem = 'A';
-    Node root = *create_nodes;
+    create_nodes->elem = elem;
+    return *create_nodes;
+}
+
+int main() {
     
-    //third node
-    create_nodes = new Node;
-    create_nodes->elem = 'B';
-    Node b = *create_nodes;
+    Node root = add_new_node ('A');
+    Node b = add_new_node('B');
+    Node c = add_new_node('C');
+    Node d = add_new_node('D');
+    Node e = add_new_node('E');
+    Node f = add_new_node('F');
+    Node g = add_new_node('G');
+    Node h = add_new_node('H');
+    Node i = add_new_node('I');
+    Node j = add_new_node('J');
+    Node k = add_new_node('k');
+    Node l = add_new_node('L');
+    Node m = add_new_node('M');
+    Node n = add_new_node('N');
+    Node o = add_new_node('O');
+    Node p = add_new_node('P');
+    Node q = add_new_node('Q');
+    Node r = add_new_node('R');
+    Node s = add_new_node('S');
+    Node t = add_new_node('T');
+    Node u = add_new_node('U');
+
     
-    create_nodes = new Node;
-    create_nodes->elem = 'C';
-    Node c = *create_nodes;
-    
-    //second node
-    create_nodes = new Node;
-    create_nodes->elem = 'D';
-    Node d = *create_nodes;
-    
-    create_nodes = new Node;
-    create_nodes->elem = 'E';
-    Node e = *create_nodes;
-    
-    create_nodes = new Node;
-    create_nodes->elem = 'F';
-    Node f = *create_nodes;
-    
-    create_nodes = new Node;
-    create_nodes->elem = 'G';
-    Node g = *create_nodes;
-    
-    create_nodes = new Node;
-    create_nodes->elem = 'H';
-    Node h = *create_nodes;
-    
-    create_nodes = new Node;
-    create_nodes->elem = 'I';
-    Node i = *create_nodes;
-    
-    create_nodes = new Node;
-    create_nodes->elem = 'J';
-    Node j = *create_nodes;
-    
-    create_nodes = new Node;
-    create_nodes->elem = 'K';
-    Node k = *create_nodes;
-    
-    create_nodes = new Node;
-    create_nodes->elem = 'L';
-    Node l = *create_nodes;
-    
-    create_nodes = new Node;
-    create_nodes->elem = 'M';
-    Node m = *create_nodes;
-    
-    create_nodes = new Node;
-    create_nodes->elem = 'N';
-    Node n = *create_nodes;
-    
-    create_nodes = new Node;
-    create_nodes->elem = 'O';
-    Node o = *create_nodes;
-    
-    create_nodes = new Node;
-    create_nodes->elem = 'P';
-    Node p = *create_nodes;
-    
-    create_nodes = new Node;
-    create_nodes->elem = 'Q';
-    Node q = *create_nodes;
-    
-    create_nodes = new Node;
-    create_nodes->elem = 'R';
-    Node r = *create_nodes;
-    
-    create_nodes = new Node;
-    create_nodes->elem = 'S';
-    Node s = *create_nodes;
-    
-    create_nodes = new Node;
-    create_nodes->elem = 'T';
-    Node t = *create_nodes;
-    
-    create_nodes = new Node;
-    create_nodes->elem = 'U';
-    Node u = *create_nodes;
     
    //connecting the nodes
     g.middle_child = &n;
-    
     h.left_child = &o;
     h.right_child = &p;
-    
     i.left_child = &p;
     i.right_child = &q;
-    
     j.middle_child = &r;
-    
     k.middle_child = &s;
-    
     l.middle_child = &t;
-    
     p.middle_child = &u;
-    
     c.right_child = &h;
     c.left_child = &g;
-    
     d.left_child = &i;
     d.right_child = &j;
-    
     b.right_child = &f;
     b.left_child = &e;
-    
     e.left_child = &k;
     e.right_child = &l;
-    
     f.left_child = &l;
     f.right_child = &m;
     
     root.middle_child = &c;
     root.left_child = &b;
     root.right_child = &d;
-    
-    //serves as iterator
-    create_nodes = &root;
     
     //open is an array-based queue
     Node open[26];
@@ -154,17 +85,15 @@ int main() {
     Node closed[26];
     int closed_counter = 0;
     
-    
     //SUCCESS value
-    char goal = 'j';
+    char goal = 'u';
     
-    while (bfs_index <= open_counter - 1) {
+    while (bfs_index < open_counter) {
         
         //boolean to check if Node X children exist
         bool r_child_exists = false;
         bool l_child_exists = false;
         bool m_child_exists = false;
-        
         
         //remove node x from open
         if (open[bfs_index].elem == goal) {
