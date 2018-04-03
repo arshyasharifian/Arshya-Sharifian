@@ -1,6 +1,5 @@
 //Arshya Sharifian
 //CWID: 889626362
-//481_BFS_implementation_DATE_3_19_2018_TIME_1201
 
 #include <iostream>
 using namespace std;
@@ -44,8 +43,6 @@ int main() {
     Node t = add_new_node('T');
     Node u = add_new_node('U');
 
-    
-    
    //connecting the nodes
     g.middle_child = &n;
     h.left_child = &o;
@@ -66,7 +63,6 @@ int main() {
     e.right_child = &l;
     f.left_child = &l;
     f.right_child = &m;
-    
     root.middle_child = &c;
     root.left_child = &b;
     root.right_child = &d;
@@ -79,6 +75,7 @@ int main() {
     open[open_counter] = root;
     open_counter++;
     
+    //index for open queue representing BFS
     int bfs_index = 0;
     
     //closed is an array-based queue
@@ -88,14 +85,15 @@ int main() {
     //SUCCESS value
     char goal = 'u';
     
+    //while there are nodes to consider
     while (bfs_index < open_counter) {
         
-        //boolean to check if Node X children exist
+        //boolean to check if a child node exists
         bool r_child_exists = false;
         bool l_child_exists = false;
         bool m_child_exists = false;
         
-        //remove node x from open
+        //consider if current node is SUCCESS node
         if (open[bfs_index].elem == goal) {
             cout << "found" << endl;
             exit(0);
@@ -133,35 +131,32 @@ int main() {
         for (int i = bfs_index; i < open_counter; i++) {
             if (check_l->elem == open[i].elem) {
                 l_child_exists = false;
-                //delete check_l;
-            }//end if
+            }
             if (check_m->elem == open[i].elem) {
                 m_child_exists = false;
-                //delete check_m;
-            }//end if
+            }
             if (check_r->elem == open[i].elem) {
                 r_child_exists = false;
-                //delete check_r;
-            }//end if
-        }//end for loop
+            }
+        }
         
         //check closed array
         for (int i = 0; i < closed_counter; i++) {
             if (check_l == &closed[i]) {
                 l_child_exists = false;
-                delete check_l;
-            }//end if
+            }
             if (check_m == &closed[i]) {
                 m_child_exists = false;
-                delete check_m;
-            }//end if
+            }
             if (check_r == &closed[i]) {
                 r_child_exists = false;
-                delete check_r;
-            }//end if
-        }//end for loop
+            }
+        }
         
-        //adding to open queue if child exists
+        /*adding to open queue if child exists
+         and isn't a in either the open or
+         closed array
+        */
         if ((l_child_exists)) {
             open[open_counter] = temp_l_child;
             open_counter++;
@@ -177,19 +172,16 @@ int main() {
         
         bfs_index++;
         
-         cout << "open" << endl;
-         for (int i = bfs_index; i < open_counter; i++) {
-         cout << open[i].elem << endl;
-         }
-         
-         cout << "closed" << endl;
-         for (int i = 0; i < closed_counter; i++) {
-         cout << closed[i].elem << endl;
-         }
-        
-        //cout << open_counter << endl;
-        
-    }//end while
+        //tracings
+        cout << "open" << endl;
+        for (int i = bfs_index; i < open_counter; i++) {
+            cout << open[i].elem << endl;
+        }
+        cout << "closed" << endl;
+        for (int i = 0; i < closed_counter; i++) {
+            cout << closed[i].elem << endl;
+        }
+    }
     
     cout << "not found" << endl;
     
