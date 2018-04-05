@@ -158,7 +158,7 @@ bool is_op(ofstream& ofs, char *&p, char * ope, LA_output & val) {
                     for (int j = 0; j < 4; j++){
                         if (word_ope == two_char_operator[j]){
                             writetofile(ofs, word_ope, "operator", val);
-                            cout << word_ope << " is valid" << endl;
+                            //cout << word_ope << " is valid" << endl;
                             ++p;
                             return true;
                         }//end if two_char operator
@@ -166,12 +166,12 @@ bool is_op(ofstream& ofs, char *&p, char * ope, LA_output & val) {
                     //if second char isn't a valid operator
                     ++p;
                     writetofile(ofs, word_ope, "unknown", val);
-                    cout << word_ope << " is not valid" << endl;
+                    //cout << word_ope << " is not valid" << endl;
                     return true;
                 }//end if second char is an operator
             }//end for k
             writetofile(ofs, word_ope, "operator", val);
-            cout << word_ope << " is valid" << endl;
+            //cout << word_ope << " is valid" << endl;
             return true;
         }//end if first char is an operator
     }
@@ -200,7 +200,6 @@ bool is_comment(char *&p, fstream & fin, string & x){
 
 //the lexer function considers all valid inputs
 LA_output lexer(char *& p, ofstream & outfile, fstream & fin, string & x){
-   
     //valid keywords, separators, and operators
     string keywords[13] = { "int","boolean","real","function","return","true",
         "false","if","else","endif","while","get","put" };
@@ -212,7 +211,10 @@ LA_output lexer(char *& p, ofstream & outfile, fstream & fin, string & x){
     else if (isdigit(*p))m_int_real(outfile, p, ex);
     else if (is_op(outfile, p, operators, ex)) {}
     else if (is_sep(outfile, p, separators, ex)) {}
-    else if ((((*p) == 32) || (*p == '\t')) || ((*p == '\n') || (int)(*p) == 13)) {++p;}
+    else if ((((*p) == 32) || (*p == '\t')) || ((*p == '\n') || (int)(*p) == 13)) {
+        ++p;
+        //lexer (p, outfile, fin, x);
+    }
     else if (is_comment(p, fin, x)){}
     else {
         char tmp = p[0];
@@ -222,41 +224,93 @@ LA_output lexer(char *& p, ofstream & outfile, fstream & fin, string & x){
     return ex;
 }
 
-
-//SA Rules
-
-void empty(LA_output record){
-    
+bool is_space(char x){
+    if ((((x) == 32) || (x == '\t')) || ((x == '\n') || (int)(x) == 13)) return true;
+    return false;
 }
 
-void primary(LA_output record, ofstream & ofs){
+
+/*
+ Assume we have the following statement
+ a = b + c;
+ 
+ One possible output would be as follows:
+ 
+ Token: Identifier          Lexeme: a
+ <Statement> -> <Assign>
+ <Assign> ->  <Identifier>  = <Expression> ;
+ 
+ Token: Operator          Lexeme: =
+ 
+ Token: Identifier          Lexeme: b
+ <Expression> -> <Term> <Expression Prime>
+ <Term> -> <Factor> <Term Prime>
+ <Factor> -> <Identifier>
+ 
+ Token:  Operator          Lexeme: +
+ <Term Prime> -> ε
+ <Expression Prime> -> + <Term> <Expression Prime>
+ 
+ Token:  Identifier           Lexeme: c
+ <Term>  -> <Factor> <Term Prime>
+ <Factor> -> <Identifier>
+ 
+ Token: Separator           Lexeme: ;
+ <Term Prime> -> ε
+ <Expression Prime> -> ε
+*/
+
+/*
+Notes: I think we must call the lexer in a specific function and expect to see a certain
+ token value, if not, it changes the direction of our syntax analysis or it could be an error.
+ For the example, a = b + c, when we see "a", we limit the various options available for 
+ an identifier as the first token. Once we find a rule that expects an identifier as the first token
+ in the line, we call the lexer (AT THAT POINT) to see if the next token is an "=".  If so,
+ we must continue down the <assign> path which expects an "=" sign next.  We again call the 
+ lexer (AT THAT POINT) and satisfy the valid conditions for <expression>.  If we are unable to satisfy
+ the conditions for <expression> there is an error.
+*/
+
+
+//r29
+void empty(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<Empty>");
+}
+
+//r28
+void primary(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     if (record.token == "identifier"){
-        cout << "match" << endl;
-        SA_output(ofs, "<primary> -> <identifier>");
+        SA_output(outfile, "<primary> -> <identifier>\n");
     }
     if (record.token == "integer"){
-        SA_output(ofs, "<primary> -> <integer");
+        SA_output(outfile, "<primary> -> <integer\n");
     }
 }
 
-void factor (LA_output record, ofstream & ofs){
+//r27
+void factor (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     if (record.lexeme == "-"){
-        SA_output (ofs, "<Factor> -> - <primary>\n");
+        SA_output (outfile, "<Factor> -> - <primary>\n");
     }
     else {
-        SA_output (ofs, "<Factor> -> <primary>\n");
+        SA_output (outfile, "<Factor> -> <primary>\n");
     }
-    primary(record, ofs);
+    primary(p, outfile, fin, record, line_code);
 }
 
 //still need to remove left recursion; just add empty as the last production
-void term (LA_output & record, ofstream & ofs){
+//r26
+void term (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     if (record.lexeme == "*"){
-        SA_output (ofs, "<Term> *");
+        SA_output (outfile, "<Term> *");
     }
     else if (record.lexeme == "/"){
-        SA_output (ofs, "<Term> /");
+        SA_output (outfile, "<Term> /");
     }
+    else{
+        factor(p, outfile, fin, record, line_code);
+    }
+    
     /*
     else{
      call lexer
@@ -264,12 +318,75 @@ void term (LA_output & record, ofstream & ofs){
      check if -
      if not call primary and compare token types
     }
-     */
+    */
 }
 
-void SA(char *&p, ofstream & outfile, fstream & fin, LA_output record, string & line_code){
-    factor(record, outfile);
+//r25
+void expression (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    if (record.lexeme == "+"){
+        SA_output (outfile, "<Expression> -> + <Term> <Expression Prime>");
+    }
+    else if (record.lexeme == "-"){
+        SA_output (outfile, "<Expression> -> - <Term> <Expression Prime>");
+    }
+    else if (record.lexeme == ";"){
+        SA_output (outfile, "<Expression Prime> -> Epsilon");
+    }
+    else{
+        term(p, outfile, fin, record, line_code);
+    }
 }
+
+//r17
+void assign (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<Assign> -> <Identifier> = <Expression>\n");
+    record = lexer (p, outfile, fin, line_code);
+    while ((is_space(record.lexeme[0])) || (record.lexeme.length() == 0)) {
+        cout << "2 space" << endl;
+        record = lexer (p, outfile, fin, line_code);
+    }
+    
+    if (record.lexeme[0] == '='){
+        record = lexer(p, outfile, fin, line_code);
+        while ((is_space(record.lexeme[0])) || (record.lexeme.length() == 0)) {
+            record = lexer (p, outfile, fin, line_code);
+        }
+        if (record.token == "identifier")
+            cout << "we out here" << endl;
+            expression(p, outfile, fin, record, line_code);
+    }
+    else {
+        cout << "syntax error:  " << record.lexeme << record.token << "hello" << endl;
+    }
+    
+}
+
+//r15
+void statement(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    if (record.token == "identifier"){
+        cout << record.token << " is the same as identifier" << endl;
+        SA_output(outfile, "<Statement> -> <Assign>\n");
+        assign(p, outfile, fin, record, line_code);
+    }
+    else{
+        cout << "statement else" << endl;
+        exit(0);
+    }
+}
+
+//The start of the syntax analyzation
+void SA(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    
+    record = lexer (p, outfile, fin, line_code);
+    while ((is_space(record.lexeme[0])) || (record.lexeme.length() == 0)){
+        record = lexer (p, outfile, fin, line_code);
+    }
+    
+    statement(p, outfile, fin, record, line_code);
+    //cout << record.lexeme << "\t" << record.token << endl;
+    
+}
+/////////////////////////////////////////////////////////////////
 
 int main() {
     
@@ -309,10 +426,10 @@ int main() {
         lex_candid = &line_code[0];
         while (lex_candid != &line_code[line_code.length()]) {
             //calling lexer and storing results
-            record = lexer (lex_candid, outfile, fin, line_code);
-            
+            //record = lexer (lex_candid, outfile, fin, line_code);
             //pass record to the SA
-            //SA (lex_candid, outfile, fin, line_code, record);
+            SA (lex_candid, outfile, fin, record, line_code);
+            cout << "after SA" << endl;
             //find rules
             //return if token type matches with rule
             
