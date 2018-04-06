@@ -271,19 +271,80 @@ Notes: I think we must call the lexer in a specific function and expect to see a
  the conditions for <expression> there is an error.
 */
 
+/*MY OUTPUT
+a			identifier
+<Statement> -> <Assign>
+<Assign> -> <Identifier> = <Expression>
+=			operator
+b			identifier
+<Expression> -> <Term> <Expression Prime>
++			operator
+<Expression> -> <Term> <Expression Prime>
+<Term> -> <Factor> <Term Prime>
+<Factor> -> <primary>
+c			identifier
+*/
+
+
+/*PROPER OUTPUT
+One possible output would be as follows:
+
+Token: Identifier          Lexeme: a
+<Statement> -> <Assign>
+<Assign> ->  <Identifier>  = <Expression> ;
+
+Token: Operator          Lexeme: =
+
+Token: Identifier          Lexeme: b
+<Expression> -> <Term> <Expression Prime>
+<Term> -> <Factor> <Term Prime>
+<Factor> -> <Identifier>
+
+Token:  Operator          Lexeme: +
+<Term Prime> -> ε
+<Expression Prime> -> + <Term> <Expression Prime>
+
+Token:  Identifier           Lexeme: c
+<Term>  -> <Factor> <Term Prime>
+<Factor> -> <Identifier>
+
+Token: Separator           Lexeme: ;
+<Term Prime> -> ε
+<Expression Prime> -> ε
+*/
+
+void get_token(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    //create function for this block
+    record = lexer (p, outfile, fin, line_code);
+    //the beginning of an expression starts with an identifier
+    while ((is_space(record.lexeme[0])) || (record.lexeme.length() == 0)) {
+        //cout << "3 space" << endl;
+        record = lexer (p, outfile, fin, line_code);
+    }
+    //end function here
+}
+
+//statement declaration
+void SA(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code);
 
 //r29
 void empty(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
-    SA_output(outfile, "<Empty>");
+    SA_output(outfile, "<Empty>\n");
 }
 
 //r28
 void primary(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    
     if (record.token == "identifier"){
         SA_output(outfile, "<primary> -> <identifier>\n");
+        get_token(p, outfile, fin, record, line_code);
     }
-    if (record.token == "integer"){
+    else if (record.token == "integer"){
         SA_output(outfile, "<primary> -> <integer\n");
+    }
+    else{
+        cout << "primary error" << endl;
+        exit(0);
     }
 }
 
@@ -298,61 +359,85 @@ void factor (char *&p, ofstream & outfile, fstream & fin, LA_output & record, st
     primary(p, outfile, fin, record, line_code);
 }
 
-//still need to remove left recursion; just add empty as the last production
-//r26
-void term (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+void term (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code);
+
+//r26 prime
+void termP (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    
     if (record.lexeme == "*"){
-        SA_output (outfile, "<Term> *");
+        SA_output (outfile, "* <Term> <Factor>\n");
+        term(p, outfile, fin, record, line_code);
     }
     else if (record.lexeme == "/"){
-        SA_output (outfile, "<Term> /");
+        SA_output (outfile, "/ <Term> <Factor>\n");
+        term(p, outfile, fin, record, line_code);
+    }
+    else if (record.lexeme == ";"){
+        SA_output (outfile, "<Term Prime> -> Epsilon\n");
+        SA(p, outfile, fin, record, line_code);
     }
     else{
-        factor(p, outfile, fin, record, line_code);
+        cout << "error" << endl;
+        //exit(0);
     }
     
-    /*
-    else{
-     call lexer
-     pass value to factor
-     check if -
-     if not call primary and compare token types
+    
+}
+
+//r26
+void term (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output (outfile, "<Term> -> <Factor> <Term Prime>\n");
+    factor(p, outfile, fin, record, line_code);
+    termP(p, outfile, fin, record, line_code);
+}
+
+void expression (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code);
+
+//r25 prime
+void expressionP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    
+    if (record.lexeme == "+"){
+        SA_output (outfile, "<Expression Prime> -> + <Term> <Expression>\n");
+        get_token (p, outfile, fin, record, line_code);
+        //call term
+        term(p, outfile, fin, record, line_code);
+        //call expression
+        expression(p, outfile, fin, record, line_code);
     }
-    */
+    else if (record.lexeme == "-"){
+        SA_output (outfile, "<Expression Prime> -> - <Term> <Expression>\n");
+        get_token (p, outfile, fin, record, line_code);
+        
+        term(p, outfile, fin, record, line_code);
+    }
+    
+    else if (record.lexeme == ";"){
+        SA_output (outfile, "<Expression Prime> -> Epsilon\n");
+    }
+    else{
+        cout << "expression prime error" << endl;
+        
+    }
+    
 }
 
 //r25
 void expression (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
-    if (record.lexeme == "+"){
-        SA_output (outfile, "<Expression> -> + <Term> <Expression Prime>");
-    }
-    else if (record.lexeme == "-"){
-        SA_output (outfile, "<Expression> -> - <Term> <Expression Prime>");
-    }
-    else if (record.lexeme == ";"){
-        SA_output (outfile, "<Expression Prime> -> Epsilon");
-    }
-    else{
-        term(p, outfile, fin, record, line_code);
-    }
+    SA_output(outfile, "<Expression> -> <Term> <Expression Prime>\n");
+    //call term
+    term(p, outfile, fin, record, line_code);
+    //call expression prime
+    expressionP(p, outfile, fin, record, line_code);
+    
 }
 
 //r17
 void assign (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output(outfile, "<Assign> -> <Identifier> = <Expression>\n");
-    record = lexer (p, outfile, fin, line_code);
-    while ((is_space(record.lexeme[0])) || (record.lexeme.length() == 0)) {
-        cout << "2 space" << endl;
-        record = lexer (p, outfile, fin, line_code);
-    }
-    
+    get_token (p, outfile, fin, record, line_code);
     if (record.lexeme[0] == '='){
-        record = lexer(p, outfile, fin, line_code);
-        while ((is_space(record.lexeme[0])) || (record.lexeme.length() == 0)) {
-            record = lexer (p, outfile, fin, line_code);
-        }
+        get_token(p, outfile, fin, record, line_code);
         if (record.token == "identifier")
-            cout << "we out here" << endl;
             expression(p, outfile, fin, record, line_code);
     }
     else {
@@ -363,9 +448,8 @@ void assign (char *&p, ofstream & outfile, fstream & fin, LA_output & record, st
 
 //r15
 void statement(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<Statement> -> <Assign>\n");
     if (record.token == "identifier"){
-        cout << record.token << " is the same as identifier" << endl;
-        SA_output(outfile, "<Statement> -> <Assign>\n");
         assign(p, outfile, fin, record, line_code);
     }
     else{
@@ -377,11 +461,7 @@ void statement(char *&p, ofstream & outfile, fstream & fin, LA_output & record, 
 //The start of the syntax analyzation
 void SA(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     
-    record = lexer (p, outfile, fin, line_code);
-    while ((is_space(record.lexeme[0])) || (record.lexeme.length() == 0)){
-        record = lexer (p, outfile, fin, line_code);
-    }
-    
+    get_token(p, outfile, fin, record, line_code);
     statement(p, outfile, fin, record, line_code);
     //cout << record.lexeme << "\t" << record.token << endl;
     
