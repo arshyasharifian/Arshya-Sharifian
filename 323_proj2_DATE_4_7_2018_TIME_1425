@@ -313,6 +313,7 @@ Token: Separator           Lexeme: ;
 <Expression Prime> -> ε
 */
 
+
 void get_token(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     //create function for this block
     record = lexer (p, outfile, fin, line_code);
@@ -324,8 +325,12 @@ void get_token(char *&p, ofstream & outfile, fstream & fin, LA_output & record, 
     //end function here
 }
 
-//statement declaration
+//function headers
+void statementlistP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code);
 void SA(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code);
+void term (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code);
+void expression (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code);
+
 
 //r29
 void empty(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
@@ -343,7 +348,7 @@ void primary(char *&p, ofstream & outfile, fstream & fin, LA_output & record, st
         SA_output(outfile, "<primary> -> <integer\n");
     }
     else{
-        cout << "primary error" << endl;
+        cout << "error: primary" << endl;
         exit(0);
     }
 }
@@ -359,7 +364,6 @@ void factor (char *&p, ofstream & outfile, fstream & fin, LA_output & record, st
     primary(p, outfile, fin, record, line_code);
 }
 
-void term (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code);
 
 //r26 prime
 void termP (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
@@ -377,8 +381,8 @@ void termP (char *&p, ofstream & outfile, fstream & fin, LA_output & record, str
         SA(p, outfile, fin, record, line_code);
     }
     else{
-        cout << "error" << endl;
-        //exit(0);
+        cout << "error: TermP" << endl;
+        exit(0);
     }
     
     
@@ -391,7 +395,6 @@ void term (char *&p, ofstream & outfile, fstream & fin, LA_output & record, stri
     termP(p, outfile, fin, record, line_code);
 }
 
-void expression (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code);
 
 //r25 prime
 void expressionP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
@@ -413,12 +416,12 @@ void expressionP(char *&p, ofstream & outfile, fstream & fin, LA_output & record
     
     else if (record.lexeme == ";"){
         SA_output (outfile, "<Expression Prime> -> Epsilon\n");
+        SA(p, outfile, fin, record, line_code);
     }
     else{
-        cout << "expression prime error" << endl;
-        
+        cout << "expression prime: error" << endl;
+        exit(0);
     }
-    
 }
 
 //r25
@@ -428,7 +431,91 @@ void expression (char *&p, ofstream & outfile, fstream & fin, LA_output & record
     term(p, outfile, fin, record, line_code);
     //call expression prime
     expressionP(p, outfile, fin, record, line_code);
-    
+}
+
+//r24
+void relop (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+
+}
+
+//r23
+void condition (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+
+}
+
+//r22
+void while_r(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+
+}
+
+//r21
+void scan (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+
+}
+
+//r20
+void print(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<Print> -> put ( <Expression> );\n");
+    //get_token
+    if (record.lexeme == "("){
+        expression(p, outfile, fin, record, line_code);
+        //get_token
+        if (record.lexeme == ")"){
+            //get_token
+            if (record.lexeme == ";"){
+                //all good
+                //get next line
+            }
+            else{
+                cout << "error(3): print" << endl;
+                //get next line
+            }
+        }
+        else{
+            cout << "error(2): print" << endl;
+            //get next line
+        }
+    }
+    else{
+        cout << "error(1): print" << endl;
+        //get next line
+    }
+}
+
+
+
+//r19p
+void return_rp(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<ReturnP> -> ;|<Expression>\n");
+    //call get_token
+    if (record.lexeme == ";"){
+        //call SA
+    }
+    else{
+        expression(p, outfile, fin, record, line_code);
+    }
+
+}
+
+//r19
+void return_r (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<Return> -> return <ReturnP>\n");
+    return_rp (p, outfile, fin, record, line_code);
+}
+
+
+//r18
+void if_r (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<If> -> if ( <Condition> ) <Statement> <ifP> \n");
+    //get token
+    if (record.lexeme == "("){
+        //call condition
+        //call statement
+        //call ifprime
+    }
+    else{
+        //error: call next line
+    }
 }
 
 //r17
@@ -441,30 +528,178 @@ void assign (char *&p, ofstream & outfile, fstream & fin, LA_output & record, st
             expression(p, outfile, fin, record, line_code);
     }
     else {
-        cout << "syntax error:  " << record.lexeme << record.token << "hello" << endl;
+        cout << "error: assign " << endl;
+        //call next code line
     }
+    
+}
+
+//r16
+void compound (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<Compound> -> { <Statement List> }\n");
+    //call statement list
     
 }
 
 //r15
 void statement(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
-    SA_output(outfile, "<Statement> -> <Assign>\n");
-    if (record.token == "identifier"){
+    SA_output(outfile, "<Statement> -> <Compound> | <Assign> | <If> | <Return> | <Print> | <Scan> | <While>\n");
+    if (record.lexeme == "{"){
+        compound (p, outfile, fin, record, line_code);
+    }
+    else if (record.token == "identifier"){
         assign(p, outfile, fin, record, line_code);
     }
+    else if (record.lexeme == "if"){
+        if_r(p, outfile, fin, record, line_code);
+    }
+    else if (record.lexeme == "return"){
+        return_r(p, outfile, fin, record, line_code);
+    }
+    else if (record.lexeme == "put"){
+        //call print
+        print(p, outfile, fin, record, line_code);
+    }
     else{
-        cout << "statement else" << endl;
+        cout << "error: statement production" << endl;
+        //get next line
         exit(0);
     }
 }
 
+//r14p
+void statementlistP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<Statement ListP> -><Empty>|<Statement List\n");
+    //if at end of line, then empty
+    //else call statement
+}
+
+//r14
+void statementlist(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<Statement List> -><Statement><Statement ListP\n");
+    statement(p, outfile, fin, record, line_code);
+    statementlistP(p, outfile, fin, record, line_code);
+}
+
+//r13p
+void scanP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+
+}
+
+//r13
+void scan_r(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+
+
+}
+
+//r12
+void declaration(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+
+}
+
+//r11p
+void declarationlistP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+
+}
+
+//r11
+void declarationlist(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+
+}
+
+//r10p
+void optDeclarationlistP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+
+}
+
+//r10
+void optDeclarationlist(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+
+}
+
+//r9
+void body (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+
+}
+
+//r8
+void qualifier (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+}
+
+//r7
+void parameter (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+
+}
+
+//r6p
+void parameterlistP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+
+}
+
+//r6
+void parameterlist(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+
+}
+
+//r5
+void optParameterlist (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+
+}
+
+//r4
+void function_r(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<Function> -> function <Identifier> [ <Opt Parameter List> ] <Opt Declaration List> <Body> <Empty> | <Function Definitions>\n");
+
+    
+}
+
+//r3p
+void functiondefinitionsP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<Function Definitions Prime> -> <Empty> | <Function Definitions>\n");
+    //if at end of code line, call empty
+    //else call function definitions
+}
+
+//r3
+void functiondefinitions(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<Function Definitions> -> <Function> <Function Definitions Prime>\n");
+    function_r(p, outfile, fin, record, line_code);
+    functiondefinitionsP(p, outfile, fin, record, line_code);
+}
+
+//r2
+void optFunctiondefinitions(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<Opt Function Definitions> -> <Opt Function Definitions> | <Empty> \n");
+    
+    //if at end of line, call empty
+    //else call functiondefinitions
+    //functiondefinitions(p, outfile, fin, record, line_code);
+    
+    
+}
+
+//r1
+void rat18s (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<rat18s> -><Opt Function Definitions > %% <Opt Declaration List> <Statement List>\n");
+    optFunctiondefinitions(p, outfile, fin, record, line_code);
+    get_token(p, outfile, fin, record, line_code);
+    if (record.lexeme == "%%"){
+        optDeclarationlist(p, outfile, fin, record, line_code);
+        statementlist(p, outfile, fin, record, line_code);
+    }
+    else{
+        cout << "error: rat18s" << endl;
+        //get next line
+    }
+
+}
+
+
+
 //The start of the syntax analyzation
 void SA(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
-    
     get_token(p, outfile, fin, record, line_code);
     statement(p, outfile, fin, record, line_code);
-    //cout << record.lexeme << "\t" << record.token << endl;
-    
 }
 /////////////////////////////////////////////////////////////////
 
@@ -484,8 +719,9 @@ int main() {
     LA_output record;
     
     //prompt user to enter file name
-    cout << "What is the name of the txt file you want to test:  " << endl;
-    cin >> file_name;
+    //cout << "What is the name of the txt file you want to test:  " << endl;
+    //cin >> file_name;
+    file_name = "t1.txt";
     fin.open(file_name);
     
     //while unable to open file prompt user to re-enter file name
@@ -505,13 +741,10 @@ int main() {
         //point to the first character of line
         lex_candid = &line_code[0];
         while (lex_candid != &line_code[line_code.length()]) {
-            //calling lexer and storing results
-            //record = lexer (lex_candid, outfile, fin, line_code);
-            //pass record to the SA
+            
             SA (lex_candid, outfile, fin, record, line_code);
             cout << "after SA" << endl;
-            //find rules
-            //return if token type matches with rule
+           
             
         }
     }
