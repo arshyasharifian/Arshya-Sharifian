@@ -330,31 +330,64 @@ void statementlistP(char *&p, ofstream & outfile, fstream & fin, LA_output & rec
 void SA(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code);
 void term (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code);
 void expression (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code);
-
+void qualifier (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code);
+void statementlist(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code);
+void statement(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code);
+void ids(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code);
 
 //r29
 void empty(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output(outfile, "<Empty>\n");
+    
+    
 }
 
 //r28
 void primary(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
-    
+    SA_output (outfile, "<Primary> ->  <Identifier> | <Integer> | <Identifier (<IDs> ) | (<Expression>) | <Real> | true | false\n");
+
     if (record.token == "identifier"){
-        SA_output(outfile, "<primary> -> <identifier>\n");
+        //if at the end of the line, then we know thats it
+        //else if (, then call Ids
+        
+        SA_output(outfile, "<Primary> -> <Identifier>\n");
         get_token(p, outfile, fin, record, line_code);
     }
     else if (record.token == "integer"){
-        SA_output(outfile, "<primary> -> <integer\n");
+        SA_output(outfile, "<Primary> -> <integer>\n");
+    }
+    else if (record.lexeme == "("){
+        SA_output(outfile, "<Primary> -> (<Expression>)\n");
+        expression(p, outfile, fin, record, line_code);
+        get_token(p, outfile, fin, record, line_code);
+        if (record.lexeme == ")"){
+            //we good
+        }
+        else{
+            cout << "error(2): primary" << endl;
+        }
+        
+    }
+    else if (record.token == "Real"){
+        SA_output(outfile, "<Primary> -> <real>\n");
+    }
+    else if (record.lexeme == "true"){
+        SA_output(outfile, "<Primary> -> true\n");
+
+    }
+    else if (record.lexeme == "false"){
+        SA_output(outfile, "<Primary> -> false\n");
+
     }
     else{
-        cout << "error: primary" << endl;
-        exit(0);
+        cout << "error(1): primary" << endl;
     }
 }
 
 //r27
 void factor (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output (outfile, "<Factor> -> -<Primary> | <Primary>\n");
+
     if (record.lexeme == "-"){
         SA_output (outfile, "<Factor> -> - <primary>\n");
     }
@@ -367,23 +400,28 @@ void factor (char *&p, ofstream & outfile, fstream & fin, LA_output & record, st
 
 //r26 prime
 void termP (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output (outfile, "<Term Prime> -> *<Factor><Term> | /<Factor><Term> |<Empty>\n");
+
     
     if (record.lexeme == "*"){
-        SA_output (outfile, "* <Term> <Factor>\n");
+        SA_output (outfile, "<Term Prime> -> * <Term> <Factor>\n");
         term(p, outfile, fin, record, line_code);
     }
     else if (record.lexeme == "/"){
-        SA_output (outfile, "/ <Term> <Factor>\n");
+        SA_output (outfile, "<Term Prime> -> / <Term> <Factor>\n");
         term(p, outfile, fin, record, line_code);
     }
-    else if (record.lexeme == ";"){
-        SA_output (outfile, "<Term Prime> -> Epsilon\n");
-        SA(p, outfile, fin, record, line_code);
-    }
+    /*
+     //end of code line
+     else if (record.lexeme == ";"){
+     SA_output (outfile, "<Term Prime> -> Epsilon\n");
+     //should go to next token
+     }
+     */
     else{
         cout << "error: TermP" << endl;
-        exit(0);
     }
+    
     
     
 }
@@ -398,68 +436,118 @@ void term (char *&p, ofstream & outfile, fstream & fin, LA_output & record, stri
 
 //r25 prime
 void expressionP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output (outfile, "<Expression Prime> -> + <Term> <Expression | - <Term> <Expression | Empty\n");
     
-    if (record.lexeme == "+"){
-        SA_output (outfile, "<Expression Prime> -> + <Term> <Expression>\n");
-        get_token (p, outfile, fin, record, line_code);
-        //call term
+    if ((record.lexeme == "+") || (record.lexeme == "-")){
         term(p, outfile, fin, record, line_code);
-        //call expression
         expression(p, outfile, fin, record, line_code);
     }
-    else if (record.lexeme == "-"){
-        SA_output (outfile, "<Expression Prime> -> - <Term> <Expression>\n");
-        get_token (p, outfile, fin, record, line_code);
-        
-        term(p, outfile, fin, record, line_code);
-    }
+    //else if end of line code, we good
     
+    /*PREV IDEA, DON'T THINK IT WILL WORK, BUT IT MIGHT BE RIGHT
     else if (record.lexeme == ";"){
         SA_output (outfile, "<Expression Prime> -> Epsilon\n");
         SA(p, outfile, fin, record, line_code);
     }
+    */
     else{
         cout << "expression prime: error" << endl;
-        exit(0);
+        
     }
 }
 
 //r25
 void expression (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output(outfile, "<Expression> -> <Term> <Expression Prime>\n");
-    //call term
     term(p, outfile, fin, record, line_code);
-    //call expression prime
     expressionP(p, outfile, fin, record, line_code);
 }
 
 //r24
 void relop (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<Relop> -> == | ^= | > | < | => | =< \n");
+    if ((record.lexeme == "==") || (record.lexeme == "^=")){
+        
+    }
+    else if ((record.lexeme == ">") || (record.lexeme == "<")){
+        
+    }
+    else if ((record.lexeme == "=>") || (record.lexeme == "=<")){
+        
+    }
+    else{
+        cout << "error: relop" << endl;
+    }
 
 }
 
 //r23
 void condition (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
-
+    SA_output(outfile, "<Condition> -> <Expression> <Relop> <Expression>\n");
+    expression(p, outfile, fin, record, line_code);
+    relop(p, outfile, fin, record, line_code);
+    expression(p, outfile, fin, record, line_code);
+    
 }
 
 //r22
 void while_r(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
-
+    SA_output(outfile, "<While> -> while (<Condition>) <Statement>\n");
+    if (record.lexeme == "("){
+        condition(p, outfile, fin, record, line_code);
+        get_token(p, outfile, fin, record, line_code);
+        if (record.lexeme == ")"){
+            statement(p, outfile, fin, record, line_code);
+        }
+        else{
+            cout << "error(2): while_r" << endl;
+        }
+    }
+    else{
+        cout << "error(1): while_r" << endl;
+    }
+    
 }
 
 //r21
 void scan (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<Scan> -> get (<Scan>);\n");
+    if (record.lexeme == "get"){
+        get_token(p, outfile, fin, record, line_code);
+        if (record.lexeme == "("){
+            ids(p, outfile, fin, record, line_code);
+            get_token(p, outfile, fin, record, line_code);
+            if(record.lexeme == ")"){
+                get_token(p, outfile, fin, record, line_code);
+                if (record.lexeme == ";"){
+                    //good
+                }
+                else{
+                    cout << "error (4): scan" << endl;
+                }
+            }
+            else{
+                cout << "error(3): scan" << endl;
+            }
+        }
+        else{
+            cout << "error(2): scan" << endl;
+        }
+    }
+    else{
+        cout << "error(1): scan" << endl;
+    }
 
 }
 
 //r20
 void print(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    //assume token put
     SA_output(outfile, "<Print> -> put ( <Expression> );\n");
-    //get_token
+    get_token(p, outfile, fin, record, line_code);
     if (record.lexeme == "("){
         expression(p, outfile, fin, record, line_code);
-        //get_token
+        get_token(p, outfile, fin, record, line_code);
         if (record.lexeme == ")"){
             //get_token
             if (record.lexeme == ";"){
@@ -489,10 +577,17 @@ void return_rp(char *&p, ofstream & outfile, fstream & fin, LA_output & record, 
     SA_output(outfile, "<ReturnP> -> ;|<Expression>\n");
     //call get_token
     if (record.lexeme == ";"){
-        //call SA
+        //good
     }
     else{
         expression(p, outfile, fin, record, line_code);
+        get_token(p, outfile, fin, record, line_code);
+        if (record.lexeme == ";"){
+            //good
+        }
+        else{
+            cout << "error (1): return_rp" << endl;
+        }
     }
 
 }
@@ -500,7 +595,38 @@ void return_rp(char *&p, ofstream & outfile, fstream & fin, LA_output & record, 
 //r19
 void return_r (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output(outfile, "<Return> -> return <ReturnP>\n");
-    return_rp (p, outfile, fin, record, line_code);
+    get_token(p, outfile, fin, record, line_code);
+    if (record.lexeme == "return"){
+       return_rp (p, outfile, fin, record, line_code);
+    }
+    else{
+        cout << "error: return_r" << endl;
+    }
+    
+}
+
+//r18p
+void if_rp(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<If Prime> -> endif | else <Statement> endif\n");
+    get_token(p, outfile, fin, record, line_code);
+    if (record.lexeme == "endif"){
+        
+    }
+    else if (record.lexeme == "else"){
+        statement(p, outfile, fin, record, line_code);
+        get_token(p, outfile, fin, record, line_code);
+        if (record.lexeme == "endif"){
+                //good
+        }
+        else{
+            cout << "error (2): if_rp" << endl;
+        }
+        
+    }
+    else{
+        cout << "error (1): if_rp" << endl;
+    }
+
 }
 
 
@@ -508,13 +634,21 @@ void return_r (char *&p, ofstream & outfile, fstream & fin, LA_output & record, 
 void if_r (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output(outfile, "<If> -> if ( <Condition> ) <Statement> <ifP> \n");
     //get token
+    get_token(p, outfile, fin, record, line_code);
     if (record.lexeme == "("){
         //call condition
-        //call statement
-        //call ifprime
+        condition(p, outfile, fin, record, line_code);
+        get_token(p, outfile, fin, record, line_code);
+        if(record.lexeme == ")"){
+            statement(p, outfile, fin, record, line_code);
+            if_rp(p, outfile, fin, record, line_code);
+        }
+        else{
+            cout << "error(2): if_r" << endl;
+        }
     }
     else{
-        //error: call next line
+        cout << "error(1): if_r" << endl;
     }
 }
 
@@ -524,11 +658,15 @@ void assign (char *&p, ofstream & outfile, fstream & fin, LA_output & record, st
     get_token (p, outfile, fin, record, line_code);
     if (record.lexeme[0] == '='){
         get_token(p, outfile, fin, record, line_code);
-        if (record.token == "identifier")
+        if (record.token == "identifier"){
             expression(p, outfile, fin, record, line_code);
+        }
+        else{
+            cout << "error (2): assign" << endl;
+        }
     }
     else {
-        cout << "error: assign " << endl;
+        cout << "error (1): assign" << endl;
         //call next code line
     }
     
@@ -537,7 +675,19 @@ void assign (char *&p, ofstream & outfile, fstream & fin, LA_output & record, st
 //r16
 void compound (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output(outfile, "<Compound> -> { <Statement List> }\n");
-    //call statement list
+    
+    if (record.lexeme == "{"){
+        statementlist(p, outfile, fin, record, line_code);
+        if (record.lexeme == "}"){
+            //good
+        }
+        else{
+            cout << "error (2): compound" << endl;
+        }
+    }
+    else{
+        cout << "error(1): compound" << endl;
+    }
     
 }
 
@@ -582,74 +732,157 @@ void statementlist(char *&p, ofstream & outfile, fstream & fin, LA_output & reco
 }
 
 //r13p
-void scanP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+void idsP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<Scan Prime> ->  <empty> <Scan Prime>\n");
 
+    //if at the end of line, call empty
+    //else if check for , and call scan
+    
 }
 
 //r13
-void scan_r(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+void ids(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<IDs> ->  <identifier> <Scan Prime>\n");
+    if (record.token == "identifier"){
+        idsP(p, outfile, fin, record, line_code);
+        
+    }
+    else{
+        cout << "error: scan_r" << endl;
+    }
 
 
 }
 
 //r12
 void declaration(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
-
+    SA_output(outfile, "<Declaration> ->  <Qualifier> <Scan>\n");
+    qualifier(p, outfile, fin, record, line_code);
+    ids(p, outfile, fin, record, line_code);
+    
 }
 
 //r11p
 void declarationlistP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<Declaration List Prime> ->  <Empty> | <Declaration List>\n");
+    //if at the end of the line call empty
+    //else call declaration list
 
 }
 
 //r11
 void declarationlist(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
-
+    SA_output(outfile, "<Declaration List> ->  <Declaration> ; <Declaration List Prime>\n");
+    declaration(p, outfile, fin, record, line_code);
+    get_token(p, outfile, fin, record, line_code);
+    if (record.lexeme == ";"){
+        declarationlistP(p, outfile, fin, record, line_code);
+    }
 }
 
-//r10p
-void optDeclarationlistP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
-
-}
 
 //r10
 void optDeclarationlist(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
-
+    SA_output(outfile, "<Opt Declaration List> ->  <Declaration List> | <Empty>\n");
+    //if at the end of the end of line call empty
+    //else call declaration list
+    
 }
 
 //r9
 void body (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
-
+    SA_output(outfile, "<Body> ->  { <Statement List> }\n");
+    if (record.lexeme == "{"){
+        statementlist(p, outfile, fin, record, line_code);
+        get_token(p, outfile, fin, record, line_code);
+        if (record.lexeme == "}"){
+            //good
+        }
+        else{
+            cout << "error (2): body" << endl;
+        }
+    }
+    else{
+        cout << "error (1): body" << endl;
+    }
 }
 
 //r8
 void qualifier (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<Qualifier> -> int | boolean | real\n");
+    if ((record.token == "integer") || (record.token == "real")){
+        
+    }
+    else if ((record.lexeme == "true") || (record.lexeme == "false")){
+        
+    }
+    else{
+        cout << "error: qualifer" << endl;
+    }
+
 }
 
 //r7
 void parameter (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<Parameter> -> <Scan> : <Qualifer>\n");
+    ids(p, outfile, fin, record, line_code);
+    
+    get_token(p, outfile, fin, record, line_code);
+    if (record.lexeme == ":"){
+        qualifier(p, outfile, fin, record, line_code);
+    }
+    else{
+        cout <<"error: parameter" << endl;
+    }
 
 }
 
 //r6p
 void parameterlistP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
-
+    SA_output(outfile, "<Parameter List Prime> -> <Empty> | <Parameter List>\n");
+    //if at end of code line, call empty
+    //else call parameter list
+    
 }
 
 //r6
 void parameterlist(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<Parameter List> -> <Parameter> <Parameter List Prime>\n");
+    parameter(p, outfile, fin, record, line_code);
+    parameterlistP(p, outfile, fin, record, line_code);
 
 }
 
 //r5
 void optParameterlist (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
-
+    SA_output(outfile, "<Opt Parameter List> -> <Parameter List> | <Empty>\n");
+    //if at end of code line, call empty
+    //else call parameter list
+    
 }
 
 //r4
 void function_r(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output(outfile, "<Function> -> function <Identifier> [ <Opt Parameter List> ] <Opt Declaration List> <Body> <Empty> | <Function Definitions>\n");
-
+    
+    if (record.lexeme == "function"){
+        //get_token
+        if (record.token == "identifier"){
+            //get_token
+            if (record.lexeme == "["){
+                optDeclarationlist(p, outfile, fin, record, line_code);
+            }
+            else{
+                cout << "error (3): function_r" << endl;
+            }
+        }
+        else{
+            cout << "error (2): function_r" << endl;
+        }
+    }
+    else{
+        cout << "error (1): function_r" << endl;
+    }
     
 }
 
