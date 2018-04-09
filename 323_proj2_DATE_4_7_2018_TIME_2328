@@ -213,41 +213,55 @@ LA_output lexer(char *& p, ofstream & outfile, fstream & fin, string & x){
     else if (isdigit(*p))m_int_real(outfile, p, ex);
     else if (is_op(outfile, p, operators, ex)) {}
     else if (is_sep(outfile, p, separators, ex)) {}
-    else if ((((*p) == 32) || (*p == '\t')) || ((*p == '\n') || (int)(*p) == 13)) {
+    else if (((((*p) == 32) || (*p == '\t')) || ((*p == '\n') || (int)(*p) == 13)) || ((int)(*p) == 0)) {
+        if ((*p) == '\n') ex.token = "new line";
+        else if (*p == 32) ex.token = "32";
+        else if (*p == '\t') ex.token = "tab";
+        else if (*p == 13) ex.token = "13";
+        else{
+            ex.token = "undefined space";
+        }
         ++p;
     }
-    else if (is_comment(p, fin, x)){}
-    else {
-        char tmp = p[0];
-        writetofile(outfile, tmp, "unknown", ex);
+    //else if (is_comment(p, fin, x)){
+    //}
+    else if (*p =='!'){
         ++p;
+        while (*p != '!')
+        {
+            if (p != &x[x.length()])
+                ++p;
+            else
+            {
+                getline(fin, x);
+                p = &x[0];
+            }
+        }
+        ++p;
+        //lexer(p, outfile, fin, x);
+        //ex.token = "unknown";
+    }
+    else {
+        //char tmp = p[0];
+        //writetofile(outfile, tmp, "unknown", ex);
+        ++p;
+        //cout << "else" << endl;
+        //lexer(p, outfile, fin, x);
+        ex.token = "unknown";
     }
     return ex;
 }
 
 bool is_space(char x){
-    if ((((((x) == 32) || (x == '\t')) || ((x == '\n') || (int)(x) == 13)) || (x == '\r')) || (x == 0)) cout << "true" <<endl; return true;
+    if ((((((x) == 32) || (x == '\t')) || ((x == '\n') || (int)(x) == 13)) || (x == '\r')) || ((int)x == 0)) cout << "true" <<endl; return true;
     return false;
 }
 
 //super header
 void SA(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code);
+void new_line(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code);
 
 
-//when we run into an error, we can call new_line
-void new_line(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
-    if (getline(fin, line_code)){
-        p = &line_code[0];
-        record = lexer(p, outfile, fin, line_code);
-        SA (p, outfile, fin, record, line_code);
-    }
-    else {
-        cout << "empty file" << endl;
-        outfile.close();
-        fin.close();
-        exit(0);
-    }
-}
 
 //if at the end of the line, get a new line, if it exists, else throw an error
 bool end_line(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
@@ -269,18 +283,27 @@ void get_token(char *&p, ofstream & outfile, fstream & fin, LA_output & record, 
     //cout << (int)record.lexeme[0] <<"\t" << "13" << endl;
     record = lexer (p, outfile, fin, line_code);
     
-    bool prob = true;
-    
-    
-    while (prob){
+    /*
+    int too_many_spaces = 0;
+    while (too_many_spaces != 5){
         if (record.lexeme.length() == 0){
-            cout << "length is 0" << endl;
             record = lexer(p, outfile, fin, line_code);
         }
-        else if (record.token == "unknown"){
-            cout << "unknown" << endl;
+        too_many_spaces++;
+    }
+     */
+    
+    
+    
+    bool prob = true;
+    //int zero_len = 0;
+    //cout << (int)*(--p) << endl;
+    
+    while (prob){
+        if (record.token == "unknown"){
             if (getline(fin, line_code)){
                 p = &line_code[0];
+                //get_token(p, outfile, fin, record, line_code);
             }
             else{
                 cout << "empty file" << endl;
@@ -288,6 +311,14 @@ void get_token(char *&p, ofstream & outfile, fstream & fin, LA_output & record, 
                 fin.close();
                 exit(0);
             }
+            record = lexer(p, outfile, fin, line_code);
+            
+        }
+        else if(record.token == "13"){
+            new_line(p, outfile, fin, record, line_code);
+            record = lexer(p, outfile, fin, line_code);
+        }
+        else if (record.lexeme.length() == 0){
             record = lexer(p, outfile, fin, line_code);
         }
         else{
@@ -298,60 +329,23 @@ void get_token(char *&p, ofstream & outfile, fstream & fin, LA_output & record, 
     }
     
     
-    /* DRAFT 2
-    if (((int)record.lexeme[0] == 13) || ((int)*p == (int)line_code[line_code.length()-1])){
-        if (getline(fin, line_code)){
-            p = &line_code[0];
-            record = lexer (p, outfile, fin, line_code);
-            while (((is_space(record.lexeme[0])) || (record.lexeme.length() == 0)) || (record.token == "unknown")) {
-                record = lexer (p, outfile, fin, line_code);
-            }
-        }
-        else{
-            cout << "empty file" << endl;
-            outfile.close();
-            fin.close();
-            exit(0);
-        }
-    }
-    else if (((is_space(record.lexeme[0]) || (record.lexeme.length() == 0))) || (record.token == "unknown")) {
-        //record = lexer (p, outfile, fin, line_code);
-        while (((is_space(record.lexeme[0])) || (record.lexeme.length() == 0)) || (record.token == "unknown")) {
-            record = lexer (p, outfile, fin, line_code);
-        }
-    }
-     */
-    
-    
-    /* DRAFT 1
-    record = lexer (p, outfile, fin, line_code);
-    //if ((!(end_line(p, outfile, fin, record, line_code))) || (record.lexeme[0] == line_code[line_code.length()-1])){
-    if (!((record.lexeme[0]) == line_code[line_code.length()-1])){
-        //create function for this block
-        //record = lexer (p, outfile, fin, line_code);
-        //the beginning of an expression starts with an identifier
-        while (((is_space(record.lexeme[0])) || (record.lexeme.length() == 0)) || (record.token == "unknown")) {
-            //cout << "3 space" << endl;
-            record = lexer (p, outfile, fin, line_code);
-        }
-    }
-    else if (getline(fin, line_code)){
+}
+
+//when we run into an error, we can call new_line
+void new_line(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    if (getline(fin, line_code)){
         p = &line_code[0];
-        record = lexer(p, outfile, fin, line_code);
-        while (((is_space(record.lexeme[0])) || (record.lexeme.length() == 0)) || (record.token == "unknown")) {
-            //cout << "3 space" << endl;
-            record = lexer (p, outfile, fin, line_code);
-        }
+        //record = lexer(p, outfile, fin, line_code);
+        //get_token(p, outfile, fin, record, line_code);
+        //SA (p, outfile, fin, record, line_code);
     }
-    else{
+    else {
         cout << "empty file" << endl;
         outfile.close();
         fin.close();
         exit(0);
     }
-     */
 }
-
 
 //function headers
 void functiondefinitions(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code);
@@ -891,12 +885,13 @@ void statementlist(char *&p, ofstream & outfile, fstream & fin, LA_output & reco
 
 //r13p
 void idsP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
-    SA_output(outfile, "<Ids Prime> ->  <Empty> |, <Scan>\n");
+    SA_output(outfile, "<Ids Prime> ->  <Empty> |, <Ids>\n");
     
     
     if (record.lexeme == ","){
         get_token(p, outfile, fin, record, line_code);
-        scan(p, outfile, fin, record, line_code);
+        ids(p, outfile, fin, record, line_code);
+        //scan(p, outfile, fin, record, line_code);
     }
     else{
         
@@ -931,9 +926,10 @@ void ids(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string
         
     }
     else{
+        
         SA_output(outfile,"error: scan_r\n");
         new_line(p, outfile, fin, record, line_code);
-        //SA(p, outfile, fin, record, line_code);
+        SA(p, outfile, fin, record, line_code);
     }
 }
 
@@ -1053,11 +1049,11 @@ void parameter (char *&p, ofstream & outfile, fstream & fin, LA_output & record,
 
 //r6p
 void parameterlistP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
-    SA_output(outfile, "<Parameter List Prime> -> <Empty> | <Parameter List>\n");
+    SA_output(outfile, "<Parameter List Prime> -> <Empty> | , <Parameter List>\n");
     
-    if (record.token == "identifier"){
+    
+    if (record.lexeme == ","){
         parameterlist(p, outfile, fin, record, line_code);
-
     }
     //empty
     else{
@@ -1230,18 +1226,18 @@ void rat18s (char *&p, ofstream & outfile, fstream & fin, LA_output & record, st
 
 //The start of the syntax analyzation
 void SA(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
-        cout << record.token << "\t" << record.lexeme << endl;
-        if (record.token == "identifier"){
-            //get_token(p, outfile, fin, record, line_code);
-            statement(p, outfile, fin, record, line_code);
-        }
-        else if (record.lexeme == "function"){
-            //get_token(p, outfile, fin, record, line_code);
-            rat18s(p, outfile, fin, record, line_code);
-        }
-        else{
-            optDeclarationlist(p, outfile, fin, record, line_code);
-        }
+    new_line(p, outfile, fin, record, line_code);
+    get_token(p, outfile, fin, record, line_code);
+    //cout << record.token << "\t" << record.lexeme << endl;
+    if (record.lexeme == "function"){
+        rat18s(p, outfile, fin, record, line_code);
+    }
+    else if (record.token == "identifier"){
+        statement(p, outfile, fin, record, line_code);
+    }
+    else{
+        optDeclarationlist(p, outfile, fin, record, line_code);
+    }
 }
 /////////////////////////////////////////////////////////////////
 
@@ -1263,7 +1259,7 @@ int main() {
     //prompt user to enter file name
     //cout << "What is the name of the txt file you want to test:  " << endl;
     //cin >> file_name;
-    file_name = "t1.txt";
+    file_name = "vt1.txt";
     fin.open(file_name);
     
     //while unable to open file prompt user to re-enter file name
@@ -1278,8 +1274,10 @@ int main() {
     outfile << setw(10)<<"token"<<"\t\t\t" << "lexeme" <<endl;
     outfile << "--------------------------------------------------------------\n";
     
-    new_line(lex_candid, outfile, fin, record, line_code);
-    
+    //new_line(lex_candid, outfile, fin, record, line_code);
+    cout << "here1" << endl;
+    SA(lex_candid, outfile, fin, record, line_code);
+    cout << "here" << endl;
     /*
     //while there are remaining code lines
     while (getline(fin, line_code)) {
