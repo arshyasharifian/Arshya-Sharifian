@@ -217,7 +217,11 @@ LA_output lexer(char *& p, ofstream & outfile, fstream & fin, string & x){
         if ((*p) == '\n') ex.token = "new line";
         else if (*p == 32) ex.token = "32";
         else if (*p == '\t') ex.token = "tab";
-        else if (*p == 13) ex.token = "13";
+        else if (*p == 13){
+           ex.token = "13";
+            //getline(fin, x);
+            //p = &x[0];
+        }
         else{
             ex.token = "undefined space";
         }
@@ -237,6 +241,7 @@ LA_output lexer(char *& p, ofstream & outfile, fstream & fin, string & x){
                 p = &x[0];
             }
         }
+        ex.lexeme = "";
         ++p;
         //lexer(p, outfile, fin, x);
         //ex.token = "unknown";
@@ -300,6 +305,7 @@ void get_token(char *&p, ofstream & outfile, fstream & fin, LA_output & record, 
     //cout << (int)*(--p) << endl;
     
     while (prob){
+        cout << (int)record.lexeme[0] << endl;
         if (record.token == "unknown"){
             if (getline(fin, line_code)){
                 p = &line_code[0];
@@ -314,7 +320,7 @@ void get_token(char *&p, ofstream & outfile, fstream & fin, LA_output & record, 
             record = lexer(p, outfile, fin, line_code);
             
         }
-        else if(record.token == "13"){
+        else if((record.token == "13")){// || (record.lexeme[0] == 0)){
             new_line(p, outfile, fin, record, line_code);
             record = lexer(p, outfile, fin, line_code);
         }
@@ -1018,10 +1024,7 @@ void body (char *&p, ofstream & outfile, fstream & fin, LA_output & record, stri
 void qualifier (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output(outfile, "<Qualifier> -> int | boolean | real\n");
     
-    if ((record.lexeme == "integer") || (record.lexeme == "real")){
-        get_token(p, outfile, fin, record, line_code);
-    }
-    else if ((record.lexeme == "true") || (record.lexeme == "false")){
+    if (((record.lexeme == "int") || (record.lexeme == "real")) || (record.lexeme == "boolean")){
         get_token(p, outfile, fin, record, line_code);
     }
     else{
@@ -1259,7 +1262,7 @@ int main() {
     //prompt user to enter file name
     //cout << "What is the name of the txt file you want to test:  " << endl;
     //cin >> file_name;
-    file_name = "vt1.txt";
+    file_name = "t1.txt";
     fin.open(file_name);
     
     //while unable to open file prompt user to re-enter file name
