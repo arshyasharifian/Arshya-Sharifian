@@ -213,16 +213,12 @@ LA_output lexer(char *& p, ofstream & outfile, fstream & fin, string & x){
     else if (isdigit(*p))m_int_real(outfile, p, ex);
     else if (is_op(outfile, p, operators, ex)) {}
     else if (is_sep(outfile, p, separators, ex)) {}
-    else if (((((*p) == 32) || (*p == '\t')) || ((*p == '\n') || (int)(*p) == 13)) || ((int)(*p) == 0)) {
-        if ((*p) == '\n') ex.token = "new line";
-        else if (*p == 32) ex.token = "32";
-        else if (*p == '\t') ex.token = "tab";
-        else if (*p == 13){
-           ex.token = "13";
-            //getline(fin, x);
-            //p = &x[0];
-        }
-        else{
+    //else if (((((*p) == 32) || (*p == '\t')) || ((*p == '\n') || (int)(*p) == 13)) || ((int)(*p) == 0)) {
+    else if ((int)*p <= 32){
+        if ((int)(*p) == 13) ex.token = "return carridge";
+        else if ((int)*p <= 0) ex.token = "error";
+        else {
+            cout << (int)(*p) << endl;
             ex.token = "undefined space";
         }
         ++p;
@@ -250,8 +246,7 @@ LA_output lexer(char *& p, ofstream & outfile, fstream & fin, string & x){
         //char tmp = p[0];
         //writetofile(outfile, tmp, "unknown", ex);
         ++p;
-        //cout << "else" << endl;
-        //lexer(p, outfile, fin, x);
+        //error
         ex.token = "unknown";
     }
     return ex;
@@ -305,7 +300,7 @@ void get_token(char *&p, ofstream & outfile, fstream & fin, LA_output & record, 
     //cout << (int)*(--p) << endl;
     
     while (prob){
-        cout << (int)record.lexeme[0] << endl;
+        //cout << (int)record.lexeme[0] << endl;
         if (record.token == "unknown"){
             if (getline(fin, line_code)){
                 p = &line_code[0];
@@ -320,7 +315,7 @@ void get_token(char *&p, ofstream & outfile, fstream & fin, LA_output & record, 
             record = lexer(p, outfile, fin, line_code);
             
         }
-        else if((record.token == "13")){// || (record.lexeme[0] == 0)){
+        else if((record.token == "return carridge") || (record.token == "error")){
             new_line(p, outfile, fin, record, line_code);
             record = lexer(p, outfile, fin, line_code);
         }
@@ -479,14 +474,20 @@ void termP (char *&p, ofstream & outfile, fstream & fin, LA_output & record, str
     }
     /*
     else if (record.lexeme == ";"){// if ((end_line(p, outfile, fin, record, line_code)) || (record.lexeme == ";")){
-        SA_output (outfile, "<Term Prime> -> Epsilon\n");
+        
+     
+     SA_output (outfile, "<Term Prime> -> Epsilon\n");
         get_token(p, outfile, fin, record, line_code);
         //SA(p, outfile, fin, record, line_code);
         //empty(p, outfile, fin, record, line_code);
     }
      */
     else{
-        
+        //remove dangling ; if it remains
+        if (record.lexeme == ";"){
+            cout << "check here" << endl;
+            //get_token(p, outfile, fin, record, line_code);
+        }
     }
 }
 
@@ -517,6 +518,10 @@ void expressionP(char *&p, ofstream & outfile, fstream & fin, LA_output & record
     }
     */
     else{
+        //remove dangingling ; if it reamins
+        if (record.lexeme == ";"){
+            //get_token(p, outfile, fin, record, line_code);
+        }
         //term(p, outfile, fin, record, line_code);
         //SA_output(outfile,"expression prime: error\n");
         //new_line(p, outfile, fin, record, line_code);
@@ -814,7 +819,6 @@ void compound (char *&p, ofstream & outfile, fstream & fin, LA_output & record, 
         get_token(p, outfile, fin, record, line_code);
         statementlist(p, outfile, fin, record, line_code);
         if (record.lexeme == "}"){
-            //good
             get_token(p, outfile, fin, record, line_code);
 
         }
@@ -837,7 +841,6 @@ void statement(char *&p, ofstream & outfile, fstream & fin, LA_output & record, 
     SA_output(outfile, "<Statement> -> <Compound> | <Assign> | <If> | <Return> | <Print> | <Scan> | <While>\n");
     
     if (record.lexeme == "{"){
-        get_token(p, outfile, fin, record, line_code);
         compound (p, outfile, fin, record, line_code);
     }
     else if (record.token == "identifier"){
@@ -848,7 +851,6 @@ void statement(char *&p, ofstream & outfile, fstream & fin, LA_output & record, 
         if_r(p, outfile, fin, record, line_code);
     }
     else if (record.lexeme == "return"){
-        //get_token(p, outfile, fin, record, line_code);
         return_r(p, outfile, fin, record, line_code);
     }
     else if (record.lexeme == "put"){
@@ -856,7 +858,6 @@ void statement(char *&p, ofstream & outfile, fstream & fin, LA_output & record, 
         print(p, outfile, fin, record, line_code);
     }
     else if (record.lexeme == "get"){
-        get_token(p, outfile, fin, record, line_code);
         scan(p, outfile, fin, record, line_code);
     }
     else if (record.lexeme == "while"){
@@ -874,7 +875,7 @@ void statement(char *&p, ofstream & outfile, fstream & fin, LA_output & record, 
 void statementlistP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output(outfile, "<Statement ListP> -><Empty>|<Statement List\n");
 
-    if (record.token == "identifier"){
+    if ((record.token == "identifier") || (record.token == "keyword")){
         statement(p, outfile, fin, record, line_code);
     }
     else{
@@ -903,22 +904,6 @@ void idsP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, strin
         
     }
     
-    /*
-    if (end_line(p, outfile, fin, record, line_code)){
-        empty(p, outfile, fin, record, line_code);
-    }
-    else {
-        if (record.lexeme == ","){
-            get_token(p, outfile, fin, record, line_code);
-            scan(p, outfile, fin, record, line_code);
-        }
-        else{
-            //SA_output(outfile, "error(2): idsP\n");
-            //new_line(p, outfile, fin, record, line_code);
-            //SA(p, outfile, fin, record, line_code);
-        }
-    }
-     */
     
 }
 
@@ -982,9 +967,8 @@ void declarationlist(char *&p, ofstream & outfile, fstream & fin, LA_output & re
 void optDeclarationlist(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output(outfile, "<Opt Declaration List> ->  <Declaration List> | <Empty>\n");
     
-    if (record.token == "identifier"){
+     if (((record.lexeme == "int") || (record.lexeme == "real")) || (record.lexeme == "boolean")){
         declarationlist(p, outfile, fin, record, line_code);
-        
     }
     //empty
     else{
@@ -1063,13 +1047,6 @@ void parameterlistP(char *&p, ofstream & outfile, fstream & fin, LA_output & rec
         
     }
     
-    /*
-    if ((end_line(p, outfile, fin, record, line_code)) || (record.lexeme == "]")) {
-        //empty(p, outfile, fin, record, line_code);
-    }
-    else{
-    }
-     */
 }
 
 //r6
@@ -1093,15 +1070,6 @@ void optParameterlist (char *&p, ofstream & outfile, fstream & fin, LA_output & 
     else{
         
     }
-    /*
-    //if no more id's
-    if ((end_line(p, outfile, fin, record, line_code)) || (record.lexeme == "]")){
-        //empty(p, outfile, fin, record, line_code);
-    }
-    else{
-        parameterlist(p, outfile, fin, record, line_code);
-    }
-     */
     
 }
 
@@ -1235,11 +1203,11 @@ void SA(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string 
     if (record.lexeme == "function"){
         rat18s(p, outfile, fin, record, line_code);
     }
-    else if (record.token == "identifier"){
-        statement(p, outfile, fin, record, line_code);
-    }
-    else{
+    else if (((record.lexeme == "int") || (record.lexeme == "real")) || (record.lexeme == "boolean")){
         optDeclarationlist(p, outfile, fin, record, line_code);
+    }
+    else if ((record.token == "identifier") || (record.token == "keyword")){
+        statement(p, outfile, fin, record, line_code);
     }
 }
 /////////////////////////////////////////////////////////////////
@@ -1278,23 +1246,8 @@ int main() {
     outfile << "--------------------------------------------------------------\n";
     
     //new_line(lex_candid, outfile, fin, record, line_code);
-    cout << "here1" << endl;
     SA(lex_candid, outfile, fin, record, line_code);
-    cout << "here" << endl;
-    /*
-    //while there are remaining code lines
-    while (getline(fin, line_code)) {
-        //point to the first character of line
-        lex_candid = &line_code[0];
-        while (lex_candid != &line_code[line_code.length()]) {
-            
-            SA (lex_candid, outfile, fin, record, line_code);
-            cout << "after SA" << endl;
-           
-            
-        }
-    }
-     */
+    
     
     fin.close();
     outfile.close();
