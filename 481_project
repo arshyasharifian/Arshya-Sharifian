@@ -1,0 +1,206 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+using namespace std;
+
+class Property{
+public:
+    long AIN;
+    int Prop_code;
+    string general_use;
+    string specific_use;
+    int year_built;
+    int effective_year_built;
+    int SQFT_home;
+    int num_bed;
+    int num_bath;
+    int recording_date;
+    double tot_value;
+    int address_number;
+    string address_street;
+    string address_city;
+    int address_zip;
+    double center_lat;
+    double center_long;
+};
+
+bool add_feature (int col_num, Property & new_prop, string prop_field){
+    
+    switch (col_num){
+        case 0: new_prop.AIN = stol(prop_field);
+            break;
+        case 1: new_prop.Prop_code = stoi(prop_field);
+            break;
+        case 2: new_prop.general_use = (prop_field);
+            break;
+        case 3: new_prop.specific_use = (prop_field);
+            break;
+        case 4: new_prop.year_built = stoi(prop_field);
+            break;
+        case 5: new_prop.effective_year_built = stoi(prop_field);
+            break;
+        case 6: new_prop.SQFT_home = stoi(prop_field);
+            break;
+        case 7: new_prop.num_bed = stoi(prop_field);
+            break;
+        case 8: new_prop.num_bath = stoi(prop_field);
+            break;
+        case 9: new_prop.recording_date = stoi(prop_field);
+            break;
+        case 10: new_prop.tot_value = stod(prop_field);
+            break;
+        case 11: new_prop.address_number = stoi(prop_field);
+            break;
+        case 12: new_prop.address_street = (prop_field);
+            break;
+        case 13: new_prop.address_city = (prop_field);
+            break;
+        case 14: new_prop.address_zip = stoi(prop_field);
+            break;
+        case 15: new_prop.center_lat = stod(prop_field);
+            break;
+        case 16: new_prop.center_long = stod(prop_field);
+            break;
+        default: cout << "error" << endl;
+            return false;
+    }
+    
+    return true;
+}
+
+bool print_prop_vector (const vector <Property> & prop_list){
+    
+    for (int i = 0; i < prop_list.size(); i++){
+            cout << prop_list[i].AIN << endl
+                 << prop_list[i].SQFT_home << endl;
+    }
+    return true;
+}
+
+int main() {
+    
+    fstream fin;
+    string line;
+    int column_count = 0;
+    vector <Property> prop_list;
+    
+    fin.open("p1.csv");
+    
+    string keyword = "";
+    
+    //if 6 or 10
+    
+    getline(fin, line);
+
+    while (getline(fin, line)){
+        Property new_prop;
+        for (int i = 0; i < line.length(); i++){
+            
+            
+            if (line[i] == '"'){
+                i++;
+                if (column_count == 10){
+                    i++;
+                }
+                while (line[i]!= '"'){
+                    if (line[i]!=',')
+                        keyword+=line[i];
+                    i++;
+                }
+            }
+            if ((line[i] == ',') || i+1 == line.length()){
+                if (column_count == 6){
+                    cout << "at 6:\t";
+                }
+                else if (column_count == 10){
+                    cout << "at 10: \t";
+                }
+                cout << keyword << endl;
+                if (!(add_feature (column_count, new_prop, keyword))) exit(0);
+                keyword = "";
+                column_count++;
+            }
+            else{
+                if (!((line[i] == '"') || (line[i] == '$')))
+                    keyword+=line[i];
+            }
+        }
+        prop_list.push_back(new_prop);
+        column_count = 0;
+    }//end while
+    
+    print_prop_vector(prop_list);
+
+    
+    exit(0);
+    
+    
+    
+    getline(fin, line);
+    cout << line << endl;
+    exit(0);
+    
+    while (getline(fin, line)){
+        string keylines = "";
+        Property new_prop;
+        column_count = 0;
+        for (int i = 0; i < line.length(); i++){
+            
+            
+            if (column_count == 6){
+                i = 1;
+            }
+            else if (column_count == 10){
+                i = 1;
+                while (line[i] != '"'){
+                    keylines += line[i];
+                }
+                i = line.length();
+            }
+            else if ((line[i] == ',') || (i + 1 == line.length())){
+                //cout << keylines << endl;
+                //if unable to add feature, exit
+                if (!(add_feature (column_count, new_prop, keylines))) exit(0);
+                keylines = "";
+                column_count++;
+            }//end if
+            else {
+                //if (line[i] != '"')
+                    keylines +=line[i];
+            }//end else
+        }//end for
+        prop_list.push_back(new_prop);
+    }//end while
+
+    
+    //print_prop_vector(prop_list);
+    
+    return 0;
+}
+
+//notes:
+/*
+ if (line[i] == 34){
+ cout << line << endl;
+ i++;
+ if (line[i] == '$'){
+ i++;
+ }
+ while (line[i] != 34){
+ keylines+=line[i];
+ i++;
+ }
+ }
+ */
+
+
+/*
+ if ((((line[1] == '$') || (line[1] == ','))||(line[2] == ',')) || (line[3] == ',')){
+ i = 1;
+ while (line[i] != '"'){
+ i++;
+ keylines+=line[i];
+ }
+ i = line.length();
+ }
+ */
