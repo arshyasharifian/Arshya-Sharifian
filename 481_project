@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <vector>
 using namespace std;
 
@@ -24,6 +25,9 @@ public:
     double center_long;
 };
 
+int sum_per_square_foot = 0;
+int average_square_foot_price;
+
 bool add_feature (int col_num, Property & new_prop, string prop_field){
     
     switch (col_num){
@@ -40,6 +44,7 @@ bool add_feature (int col_num, Property & new_prop, string prop_field){
         case 5: new_prop.effective_year_built = stoi(prop_field);
             break;
         case 6: new_prop.SQFT_home = stoi(prop_field);
+                sum_per_square_foot+=new_prop.SQFT_home;
             break;
         case 7: new_prop.num_bed = stoi(prop_field);
             break;
@@ -70,33 +75,37 @@ bool add_feature (int col_num, Property & new_prop, string prop_field){
 
 bool print_prop_vector (const vector <Property> & prop_list){
     
+    //average square foot for home = total per_square_foot/vector size;
+    
     for (int i = 0; i < prop_list.size(); i++){
-            cout << prop_list[i].AIN << endl
-                 << prop_list[i].SQFT_home << endl;
+        int per_square_foot = prop_list[i].tot_value/prop_list[i].SQFT_home;
+        sum_per_square_foot +=per_square_foot;
+        
+        
+        if (prop_list[i].year_built != prop_list[i].effective_year_built){
+            if (prop_list[i].effective_year_built >=5){
+                cout << prop_list[i].AIN << endl;
+                cout << prop_list[i].effective_year_built << endl;
+            }
+        }
+        
+        //cout << "price per square foot: \t" << per_square_foot << endl;
     }
+    
+    int average_square_foot_price = sum_per_square_foot/prop_list.size();
+    cout << "average square foot price: \t" << average_square_foot_price << endl;
+    
     return true;
 }
 
-int main() {
+vector <Property> create_property_DB(fstream & fin, string & line){
     
-    fstream fin;
-    string line;
     int column_count = 0;
-    vector <Property> prop_list;
-    
-    fin.open("p1.csv");
-    
     string keyword = "";
-    
-    //if 6 or 10
-    
-    getline(fin, line);
-
+    vector <Property> prop_list;
     while (getline(fin, line)){
         Property new_prop;
         for (int i = 0; i < line.length(); i++){
-            
-            
             if (line[i] == '"'){
                 i++;
                 if (column_count == 10){
@@ -109,13 +118,9 @@ int main() {
                 }
             }
             if ((line[i] == ',') || i+1 == line.length()){
-                if (column_count == 6){
-                    cout << "at 6:\t";
-                }
-                else if (column_count == 10){
-                    cout << "at 10: \t";
-                }
-                cout << keyword << endl;
+               
+                
+                //cout << keyword << endl;
                 if (!(add_feature (column_count, new_prop, keyword))) exit(0);
                 keyword = "";
                 column_count++;
@@ -129,78 +134,74 @@ int main() {
         column_count = 0;
     }//end while
     
-    print_prop_vector(prop_list);
-
+    average_square_foot_price = sum_per_square_foot/prop_list.size();
     
-    exit(0);
+    return prop_list;
     
-    
-    
-    getline(fin, line);
-    cout << line << endl;
-    exit(0);
-    
-    while (getline(fin, line)){
-        string keylines = "";
-        Property new_prop;
-        column_count = 0;
-        for (int i = 0; i < line.length(); i++){
-            
-            
-            if (column_count == 6){
-                i = 1;
-            }
-            else if (column_count == 10){
-                i = 1;
-                while (line[i] != '"'){
-                    keylines += line[i];
-                }
-                i = line.length();
-            }
-            else if ((line[i] == ',') || (i + 1 == line.length())){
-                //cout << keylines << endl;
-                //if unable to add feature, exit
-                if (!(add_feature (column_count, new_prop, keylines))) exit(0);
-                keylines = "";
-                column_count++;
-            }//end if
-            else {
-                //if (line[i] != '"')
-                    keylines +=line[i];
-            }//end else
-        }//end for
-        prop_list.push_back(new_prop);
-    }//end while
-
-    
-    //print_prop_vector(prop_list);
-    
-    return 0;
 }
 
-//notes:
-/*
- if (line[i] == 34){
- cout << line << endl;
- i++;
- if (line[i] == '$'){
- i++;
+
+
+
+
+void rule1(const Property & cand){
+        if (cand.effective_year_built == cand.year_built)
+            if (cand.effective_year_built < 2000){
+                cout << "this is a good property" << endl;
+                cout << cand.AIN << endl;
+            }
+}
+
+ void rule0 (const Property & cand, const int & average_square_foot_price){
+    if (cand.SQFT_home <= average_square_foot_price){
+        //proceed to next rule
+        rule1(cand);
+    }
  }
- while (line[i] != 34){
- keylines+=line[i];
- i++;
- }
- }
- */
+ 
+ 
 
 
 /*
- if ((((line[1] == '$') || (line[1] == ','))||(line[2] == ',')) || (line[3] == ',')){
- i = 1;
- while (line[i] != '"'){
- i++;
- keylines+=line[i];
- }
- i = line.length();
- }
+ Rule Translations (using data column values):
+ (Rule 0): IF price_per_sq_foot < average THEN we will consider the property
+ (Rule 1): IF effective year built != year built THEN property is flipped = bad #increment flipped
+ //if land value > improvement value
+ (Rule 5 and 7): If a property is close to a property that is commercial, fractured, or subdivided = good.
+ (Rule 3 and 6):
+ IF prop.13 date AND IF prop.13 date did not previously exist =  neutral;
+ ELSE IF prop.13 date was <=5 years ago  = slightly bad
+ ELSE neutral
+ (Rule 8): IF price sold <= average price THEN good
+ (Rule 9) IF sqft_main (size of house) >= 5000 THEN really good
+ (Rule 10) IF year built >= 2000 AND year built == effective year built, THEN good
  */
+
+/*
+ What are some important statistics to track?
+ price_per_square_foot
+ avg_price_per_square_foot
+ 
+ 
+ */
+
+
+
+int main() {
+    
+    string line;
+    fstream fin;
+    fin.open("p1.csv");
+    getline(fin, line);
+    vector <Property> prop_list;
+    
+    prop_list = create_property_DB(fin, line);
+    
+    for (int i = 0; i < prop_list.size(); i++){
+        rule0(prop_list[i], average_square_foot_price);
+    }
+    
+    //print_prop_vector(prop_list);
+
+    return 0;
+}
