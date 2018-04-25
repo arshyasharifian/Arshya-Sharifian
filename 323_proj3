@@ -2,15 +2,80 @@
 #include <string>
 #include <fstream>
 #include <iomanip>
+#include <algorithm> // for std::find
+#include <iterator> // for std::begin, std::end
 using namespace std;
+struct assembly_instruc_Table {
+	string op[1000];
+	int oprand[1000];
+	int inst_row_Num;
+	int instr_line[1000];
+};
+int instr_address;
 
+assembly_instruc_Table instruct_Table;
+
+void gen_instr(string op, int oprand)
+{
+	instruct_Table.instr_line[instruct_Table.inst_row_Num] = instr_address;
+	instruct_Table.op[instruct_Table.inst_row_Num] = op;
+	instruct_Table.oprand[instruct_Table.inst_row_Num] = oprand;
+	instr_address++;
+
+}
 int line_counter = 1;
+//counter for symbol table
+int st_row_num=0;
+int mem_addr = 2000;
+string id_type;
+
 
 //struct for holding LA record
 struct LA_output{
     string token;   //category
     string lexeme;  //actual
 };
+//SYMBOL TABLE:
+struct SYSMBOL_TABLE {
+	string id_array[100];
+	string id_type[100];
+	int mem_address[100];
+};
+SYSMBOL_TABLE symbol_table;
+
+//function to insert into symbol table
+void addIdToSymTable(string token) {
+	//lookup sysmbol table and if id not present add it.
+	if (!lookupSymbolTable(token)) {
+		symbol_table.id_array[st_row_num] = token;
+		symbol_table.id_type[st_row_num] = id_type;
+		symbol_table.mem_address[st_row_num] = mem_addr;
+		st_row_num++;
+		mem_addr++;
+	}
+}
+//function to lookup id into sysmbol table
+bool lookupSymbolTable(string token) {
+	string* pVal = std::find(std::begin(symbol_table.id_array), std::end(symbol_table.id_array), token);
+	if (pVal == std::end(symbol_table.id_array))
+	{
+		//token not present into the symbol table.
+		return false;
+	}
+	else
+	{
+		//token present into symbol table
+		return true;
+	}
+}
+//function to print the symbol table
+void printSymbolTable() {
+	for (int i = 0; i < st_row_num; i++) {
+		cout << symbol_table.id_array[i] << "\+"
+			<< symbol_table.id_type[i] << "\+"
+			<< symbol_table.mem_address[i] << endl;
+	}
+}
 
 //functions to write to file
 template <typename T>
@@ -891,18 +956,7 @@ void idsP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, strin
 void ids(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output(outfile, "<IDs> ->  <identifier> <IDs Prime>\n");
     if (record.token == "identifier"){
-        //SYMBOL TABLE:
-        //check if identifier exists in symbol
-        //if not, add identifier name to symbol table
-        //AND add (current) memory address to symbol table
-        //THEN incremement memory address by 1
-        
-        //STDIN
-        //if identifier already exists
-        //save = token
-        //get_instr(STDIN, nil);
-        //get_instr(POPM, get_address(get_address(save));
-        
+      
         //PROBLEM:
         //what if ids is called under expression so we get something like
         //a(a,b) that isn't expected to be STDIN?
