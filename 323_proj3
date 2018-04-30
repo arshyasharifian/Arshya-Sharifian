@@ -686,40 +686,32 @@ void condition (char *&p, ofstream & outfile, fstream & fin, LA_output & record,
     
      if (temp_op == "=="){
          gen_instr("EQU", 0);
+         jumpstack.push(instr_address);
+         gen_instr("JUMPZ", 0);
      }
      else if (temp_op == "^="){
          gen_instr("NEQ", 0);
+         jumpstack.push(instr_address);
+         gen_instr("JUMPZ", 0);
      }
      else if (temp_op == ">"){
          gen_instr("GRT", 0);
-     //suggests a loop will occur
-     //push_jumpstack(intr_address);
          jumpstack.push(instr_address);
-
          gen_instr("JUMPZ", 0);
      }
      else if (temp_op == "<"){
          gen_instr ("LES", 0);
-     //suggests a loop will occur
-     //push_jumpstack(intr_address);
          jumpstack.push(instr_address);
-
          gen_instr("JUMPZ", 0);
      }
      else if (temp_op == "=>"){
          gen_instr ("GEQ", 0);
-     //suggests a loop will occur
-     //push_jumpstack(intr_address);
          jumpstack.push(instr_address);
-
          gen_instr("JUMPZ", 0);
      }
      else if (temp_op == "=<"){
          gen_instr ("LEQ", 0);
-     //suggests a loop will occur
-     //push_jumpstack(intr_address);
          jumpstack.push(instr_address);
-
          gen_instr("JUMPZ", 0);
      }
      else{
@@ -751,9 +743,7 @@ void while_r(char *&p, ofstream & outfile, fstream & fin, LA_output & record, st
                 statement(p, outfile, fin, record, line_code);
                 gen_instr("JUMP", addr);
                 back_patch(instr_address); //function
-                if (end_file){
-                    gen_instr("LABEL", 0);
-                }
+
             }
             else{
                 error(p, outfile, fin, record, line_code);
@@ -871,6 +861,7 @@ void if_rp(char *&p, ofstream & outfile, fstream & fin, LA_output & record, stri
     SA_output(outfile, "<If Prime> -> endif | else <Statement> endif\n");
     
     if (record.lexeme == "endif"){
+        back_patch (instr_address);
         get_token(p, outfile, fin, record, line_code);
     }
     else if (record.lexeme == "else"){
@@ -901,7 +892,10 @@ void if_r (char *&p, ofstream & outfile, fstream & fin, LA_output & record, stri
         //? IS INSTR_ADDRESS(); A FUNCTION OR A PARAMETER?
         //for the back_patch line # i.e. when the if condition starts
         
-        instr_address = instruct_Table.instr_row_num;
+        //instr_address = instruct_Table.instr_row_num;
+        
+        //where loop/if begins
+        //const int beg_addr =instruct_Table.instr_row_num;
         
         get_token(p, outfile, fin, record, line_code);
         if (record.lexeme == "("){
@@ -910,7 +904,6 @@ void if_r (char *&p, ofstream & outfile, fstream & fin, LA_output & record, stri
             if(record.lexeme == ")"){
                 get_token(p, outfile, fin, record, line_code);
                 statement(p, outfile, fin, record, line_code);
-                back_patch (instr_address);
                 if_rp(p, outfile, fin, record, line_code);
             }
             else{
@@ -1094,7 +1087,8 @@ void ids_SCA(char *&p, ofstream & outfile, fstream & fin, LA_output & record, st
         if ((lookupSymbolTable(record.lexeme))){
             //assume called by declaration
             //insert identifier to symbol table
-            gen_instr("STDIN", pop_mem_addr);
+            gen_instr("STDIN", 0);
+            gen_instr("POPM", pop_mem_addr);
             get_token(p, outfile, fin, record, line_code);
             //idsP(p, outfile, fin, record, line_code);
         }
@@ -1456,10 +1450,13 @@ int main() {
     //get_token(lex_candid, outfile, fin, record, line_code);
     SA(lex_candid, outfile, fin, record, line_code);
     
+    gen_instr("LABEL", 0);
     printSymbolTable();
 
     
     print_instr_t();
+    
+    
 
     
     
