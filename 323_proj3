@@ -4,78 +4,147 @@
 #include <iomanip>
 #include <algorithm> // for std::find
 #include <iterator> // for std::begin, std::end
+#include <stack>
 using namespace std;
-struct assembly_instruc_Table {
-	string op[1000];
-	int oprand[1000];
-	int inst_row_Num;
-	int instr_line[1000];
-};
-int instr_address;
 
-assembly_instruc_Table instruct_Table;
-
-void gen_instr(string op, int oprand)
-{
-	instruct_Table.instr_line[instruct_Table.inst_row_Num] = instr_address;
-	instruct_Table.op[instruct_Table.inst_row_Num] = op;
-	instruct_Table.oprand[instruct_Table.inst_row_Num] = oprand;
-	instr_address++;
-
-}
+//for error printing
 int line_counter = 1;
-//counter for symbol table
-int st_row_num=0;
-int mem_addr = 2000;
-string id_type;
 
+bool end_file = false;
 
 //struct for holding LA record
 struct LA_output{
     string token;   //category
     string lexeme;  //actual
 };
-//SYMBOL TABLE:
-struct SYSMBOL_TABLE {
-	string id_array[100];
-	string id_type[100];
-	int mem_address[100];
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+//ASSEMBLY INSTRUCTION TABLE
+struct assembly_instruc_Table {
+    string op[1000];
+    int operand[1000];
+    int instr_row_num = 0;
+    int instr_line[1000];
 };
-SYSMBOL_TABLE symbol_table;
+
+int instr_address = 1;
+string temp_op;
+
+assembly_instruc_Table instruct_Table;
+
+//ASSEMBLY FUNCTION
+void gen_instr(string op, int oprand)
+{
+    instruct_Table.instr_line[instruct_Table.instr_row_num] = instr_address;
+    //instruct_Table.instr_line[instr_address-1] = instr_address;
+
+    instruct_Table.op[instruct_Table.instr_row_num] = op;
+    instruct_Table.operand[instruct_Table.instr_row_num] = oprand;
+    instruct_Table.instr_row_num++;
+    instr_address++;
+}
+
+void print_instr_t (){
+    for (int i = 0; i < instruct_Table.instr_row_num; i++){
+        cout << instruct_Table.instr_line[i] << "\t"
+             << instruct_Table.op[i] << "\t"
+        << instruct_Table.operand[i] << endl;
+    }
+}
+
+stack <int> jumpstack;
+
+//BACK_PATCH FUNCTION
+void back_patch (int jump_address){
+    
+    //go back to line number containing jumpz
+    instruct_Table.instr_row_num = jumpstack.top() - 1;
+    jumpstack.pop();
+    
+    //insert the end of the loop line number
+    instruct_Table.operand[instruct_Table.instr_row_num] = jump_address;
+    
+    //set instruct table row num back to original location
+    instruct_Table.instr_row_num = instr_address - 1;
+}
+
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+//SYMBOL TABLE:
+struct SYMBOL_TABLE {
+    string id_array[100];
+    string id_type[100];
+    int mem_address[100];
+};
+SYMBOL_TABLE symbol_table;
+
+//counter for symbol table
+int st_row_num=0;
+int mem_addr = 2000;
+int pop_mem_addr;
+string id_type; //save
+string id_lexeme;
+
+
+//Symbol Table Functions
+bool lookupSymbolTable(string token);
 
 //function to insert into symbol table
 void addIdToSymTable(string token) {
-	//lookup sysmbol table and if id not present add it.
-	if (!lookupSymbolTable(token)) {
-		symbol_table.id_array[st_row_num] = token;
-		symbol_table.id_type[st_row_num] = id_type;
-		symbol_table.mem_address[st_row_num] = mem_addr;
-		st_row_num++;
-		mem_addr++;
-	}
+    //lookup sysmbol table and if id not present add it.
+    if (!(lookupSymbolTable(token))) {
+        symbol_table.id_array[st_row_num] = token;
+        symbol_table.id_type[st_row_num] = id_type;
+        symbol_table.mem_address[st_row_num] = mem_addr;
+        st_row_num++;
+        mem_addr++;
+    }
 }
-//function to lookup id into sysmbol table
+//function to lookup id into symbol table
 bool lookupSymbolTable(string token) {
-	string* pVal = std::find(std::begin(symbol_table.id_array), std::end(symbol_table.id_array), token);
-	if (pVal == std::end(symbol_table.id_array))
-	{
-		//token not present into the symbol table.
-		return false;
-	}
-	else
-	{
-		//token present into symbol table
-		return true;
-	}
+    //string* pVal = find(begin(symbol_table.id_array), end(symbol_table.id_array), token);
+    
+    
+    for (int i = 0; i < (mem_addr - 2000); i++){
+        if (token == symbol_table.id_array[i]){
+            pop_mem_addr = symbol_table.mem_address[i];
+            return true;
+        }
+    }
+    
+    return false;
+    
+    /*
+    if (pVal == end(symbol_table.id_array))
+    {
+        //token not present into the symbol table.
+        return false;
+    }
+    else
+    {
+        //token present into symbol table
+        return true;
+    }
+     */
+    //return (pVal == end(symbol_table.id_array));
 }
 //function to print the symbol table
 void printSymbolTable() {
-	for (int i = 0; i < st_row_num; i++) {
-		cout << symbol_table.id_array[i] << "\+"
-			<< symbol_table.id_type[i] << "\+"
-			<< symbol_table.mem_address[i] << endl;
-	}
+    for (int i = 0; i < st_row_num; i++) {
+        cout << symbol_table.id_array[i] << "\t"
+        << symbol_table.id_type[i] << "\t"
+        << symbol_table.mem_address[i] << endl;
+    }
 }
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
 
 //functions to write to file
 template <typename T>
@@ -328,8 +397,13 @@ void get_token(char *&p, ofstream & outfile, fstream & fin, LA_output & record, 
 
 void error(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output_error(outfile, record.lexeme, line_counter-1);
-    get_token(p, outfile, fin, record, line_code);
-    SA(p, outfile, fin, record, line_code);
+    
+    cout << "symbol table and instruction table before error: \n";
+    printSymbolTable();
+    print_instr_t();
+    
+    exit(0);
+    
 }
 
 //the end of the line doesn't mean the end of SA
@@ -339,7 +413,16 @@ void get_token(char *&p, ofstream & outfile, fstream & fin, LA_output & record, 
     bool prob = true;
     
     while (prob){
-        if (record.token == "unknown"){
+        if (fin.eof()){
+            //cout << "eof" << endl;
+            //printSymbolTable();
+            //print_instr_t();
+            end_file = true;
+            //break;
+            prob = false;
+            //exit(0);
+        }
+        else if (record.token == "unknown"){
             if (getline(fin, line_code)){
                 p = &line_code[0];
                 line_counter++;
@@ -348,7 +431,7 @@ void get_token(char *&p, ofstream & outfile, fstream & fin, LA_output & record, 
                 //cout << "empty file" << endl;
                 outfile.close();
                 fin.close();
-                exit(0);
+                //exit(0);
             }
             record = lexer(p, outfile, fin, line_code);
             
@@ -377,7 +460,7 @@ void new_line(char *&p, ofstream & outfile, fstream & fin, LA_output & record, s
         //cout << "empty file" << endl;
         outfile.close();
         fin.close();
-        exit(0);
+        //exit(0);
     }
 }
 
@@ -391,7 +474,11 @@ void expression (char *&p, ofstream & outfile, fstream & fin, LA_output & record
 void qualifier (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code);
 void statementlist(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code);
 void statement(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code);
-void ids(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code);
+void ids_SCA(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code);
+void ids_PRI(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code);
+void ids_DEC(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code);
+
+
 
 //r29
 void empty(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
@@ -401,10 +488,10 @@ void empty(char *&p, ofstream & outfile, fstream & fin, LA_output & record, stri
 //r28p
 void primaryP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output(outfile, "<Primary Prime> -> (<Ids>) | Empty\n");
-
+    
     if (record.lexeme == "("){
         get_token(p, outfile, fin, record, line_code);
-        ids(p, outfile, fin, record, line_code);
+        ids_PRI(p, outfile, fin, record, line_code);
         if (record.lexeme == ")"){
             get_token(p, outfile, fin, record, line_code);
         }
@@ -421,13 +508,23 @@ void primaryP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, s
 //problem with <identifier>:
 void primary(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output (outfile, "<Primary> ->  <Identifier> <Primary Prime> | <Integer> | (<Expression>) | <Real> | true | false\n");
-
+    
     //automatically called
     if (record.token == "identifier"){
+        
+        if (!(lookupSymbolTable(record.lexeme))){
+            cout << "<primary>: lexeme not found" << endl;
+            exit(0);
+        }
+        
+        gen_instr ("PUSHM", pop_mem_addr);
+        
+        
         get_token(p, outfile, fin, record, line_code);
         primaryP(p, outfile, fin, record, line_code);
     }
     else if (record.token == "integer"){
+        gen_instr ("PUSHI", stoi(record.lexeme));
         get_token(p, outfile, fin, record, line_code);
         SA_output(outfile, "<Primary> -> <integer>\n");
     }
@@ -454,7 +551,7 @@ void primary(char *&p, ofstream & outfile, fstream & fin, LA_output & record, st
     else if (record.lexeme == "false"){
         get_token(p, outfile, fin, record, line_code);
         SA_output(outfile, "<Primary> -> false\n");
-
+        
     }
     else{
         error(p, outfile, fin, record, line_code);
@@ -468,8 +565,8 @@ void factor (char *&p, ofstream & outfile, fstream & fin, LA_output & record, st
     
     if (record.lexeme == "-"){
         
-        //gen_instr(SUB, nil);
-
+        gen_instr("SUB", 0);
+        
         
         get_token(p, outfile, fin, record, line_code);
         SA_output (outfile, "<Factor> -> - <Primary>\n");
@@ -491,14 +588,16 @@ void termP (char *&p, ofstream & outfile, fstream & fin, LA_output & record, str
         get_token(p, outfile, fin, record, line_code);
         SA_output (outfile, "<Term Prime> -> * <Factor> <Term Prime>\n");
         factor(p, outfile, fin, record, line_code);
-        //gen_instr(MUL, nil);
+        gen_instr("MUL", 0);
+        
         termP(p, outfile, fin, record, line_code);
     }
     else if (record.lexeme == "/"){
         get_token(p, outfile, fin, record, line_code);
         SA_output (outfile, "<Term Prime> -> / <Factor> <Term Prime>\n");
         factor (p, outfile, fin, record, line_code);
-        //gen_instr(DIV, nil);
+        gen_instr("DIV", 0);
+        
         termP(p, outfile, fin, record, line_code);
     }
     else{
@@ -519,15 +618,19 @@ void term (char *&p, ofstream & outfile, fstream & fin, LA_output & record, stri
 void expressionP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output (outfile, "<Expression Prime> -> + <Term> <Expression Prime> | - <Term> <Expression Prime> | Empty\n");
     if ((record.lexeme == "+") || (record.lexeme == "-")){
-        get_token(p, outfile, fin, record, line_code);
-        term(p, outfile, fin, record, line_code);
         if (record.lexeme == "+") {
-           //gen_instr (ADD, nil);
+            get_token(p, outfile, fin, record, line_code);
+            term(p, outfile, fin, record, line_code);
+            expressionP(p, outfile, fin, record, line_code);
+            gen_instr ("ADD", 0);
         }
         else{
-            //gen_instr (SUB, nil);
+            get_token(p, outfile, fin, record, line_code);
+            term(p, outfile, fin, record, line_code);
+            expressionP(p, outfile, fin, record, line_code);
+            gen_instr ("SUB", 0);
         }
-        expressionP(p, outfile, fin, record, line_code);
+        
     }
     else{
         SA_output (outfile, "<Expression Prime> -> <Empty>\n");
@@ -547,50 +650,28 @@ void relop (char *&p, ofstream & outfile, fstream & fin, LA_output & record, str
     SA_output(outfile, "<Relop> -> == | ^= | > | < | => | =< \n");
     
     //save the operator (>, <, etc.) to be used for instruct table later
-    //op = token
+    //temp_op = token
+    temp_op = record.lexeme;
     
     if ((record.lexeme == "==") || (record.lexeme == "^=")){
-        if (record.lexeme == "=="){
-            //gen_instr(EQU, nil);
-        }
-        else{
-            //?
-        }
         get_token(p, outfile, fin, record, line_code);
     }
     else if ((record.lexeme == ">") || (record.lexeme == "<")){
-        if (record.lexeme == ">"){
-            //gen_instr (LES, nil);
-        }
-        else{
-            //gen_instr(GRT, nil);
-        }
-        //suggests a loop will occur
-        //push_jumpstack(intr_address);
-        //gen_instr(JUMPZ, nil);
+        //SUGGESTS LOOP WILL OCCUR?
+        //push_jumpstack(instr_address);
+        //jumpstack.push(instr_address);
+        //gen_instr("JUMPZ", 0);
         get_token(p, outfile, fin, record, line_code);
     }
     else if ((record.lexeme == "=>") || (record.lexeme == "=<")){
-        if (record.lexeme == "=>"){
-            //?
-            //check if equal first
-            //else if, check greater
-            //else 0
-        }
-        else{
-            //?
-            //check if equal first
-            //else if, check less than
-            //else 0
-        }
+        //SUGGESTS LOOP WILL OCCUR?
+        //push_jumpstack(intr_address);
+        //gen_instr("JUMPZ", 0);
         get_token(p, outfile, fin, record, line_code);
     }
     else{
         error (p, outfile, fin, record, line_code);
     }
-    
-    
-
 }
 
 //r23
@@ -602,42 +683,50 @@ void condition (char *&p, ofstream & outfile, fstream & fin, LA_output & record,
     expression(p, outfile, fin, record, line_code);
     
     
-    /*
-     if (op == "==){
-        //gen_instr(EQU, nil);
+    
+     if (temp_op == "=="){
+         gen_instr("EQU", 0);
      }
-     else if (op == "^="){
-        //I think this is not equals
-        //gen_instr(NEQ, nil);
+     else if (temp_op == "^="){
+         gen_instr("NEQ", 0);
      }
-     else if (op == ">"){
-        ////gen_instr(GRT, nil);
-        //suggests a loop will occur
-        //push_jumpstack(intr_address);
-        //gen_instr(JUMPZ, nil);
+     else if (temp_op == ">"){
+         gen_instr("GRT", 0);
+     //suggests a loop will occur
+     //push_jumpstack(intr_address);
+         jumpstack.push(instr_address);
+
+         gen_instr("JUMPZ", 0);
      }
-     else if (op == "<"){
-        //gen_instr (LES, nil);
-        //suggests a loop will occur
-        //push_jumpstack(intr_address);
-        //gen_instr(JUMPZ, nil);
+     else if (temp_op == "<"){
+         gen_instr ("LES", 0);
+     //suggests a loop will occur
+     //push_jumpstack(intr_address);
+         jumpstack.push(instr_address);
+
+         gen_instr("JUMPZ", 0);
      }
-     else if (op == "=>"){
-        
-        //gen_instr (GEQ, nil);
-     
-        //suggests a loop will occur
-        //push_jumpstack(intr_address);
-        //gen_instr(JUMPZ, nil);
+     else if (temp_op == "=>"){
+         gen_instr ("GEQ", 0);
+     //suggests a loop will occur
+     //push_jumpstack(intr_address);
+         jumpstack.push(instr_address);
+
+         gen_instr("JUMPZ", 0);
      }
-     else if (op == "=<"){
-        //gen_instr (LEQ, nil);
-     
-        //suggests a loop will occur
-        //push_jumpstack(intr_address);
-        //gen_instr(JUMPZ, nil);
-    }
-     */
+     else if (temp_op == "=<"){
+         gen_instr ("LEQ", 0);
+     //suggests a loop will occur
+     //push_jumpstack(intr_address);
+         jumpstack.push(instr_address);
+
+         gen_instr("JUMPZ", 0);
+     }
+     else{
+        cout << "<Relop> error" << endl;
+        exit(0);
+     }
+    
 }
 
 //r22
@@ -646,12 +735,10 @@ void while_r(char *&p, ofstream & outfile, fstream & fin, LA_output & record, st
     
     
     if (record.lexeme == "while"){
-        //(global) addr = (global) instr_address
-        /*
-         once we are in the while loop 
-         we use label to describe the beginning of a loop
-         gen_instr("LABEL", nil); //gen_instr is a function
-         */
+        
+        //instr_address = instruct_Table.instr_row_num;
+        const int addr = instruct_Table.instr_row_num + 1;
+        gen_instr("LABEL", 0);
         
         get_token(p, outfile, fin, record, line_code);
         if (record.lexeme == "("){
@@ -662,8 +749,11 @@ void while_r(char *&p, ofstream & outfile, fstream & fin, LA_output & record, st
             if (record.lexeme == ")"){
                 get_token(p, outfile, fin, record, line_code);
                 statement(p, outfile, fin, record, line_code);
-                //gen_instr(JUMP, addr);
-                //back_patch(inst_address); //function
+                gen_instr("JUMP", addr);
+                back_patch(instr_address); //function
+                if (end_file){
+                    gen_instr("LABEL", 0);
+                }
             }
             else{
                 error(p, outfile, fin, record, line_code);
@@ -677,20 +767,20 @@ void while_r(char *&p, ofstream & outfile, fstream & fin, LA_output & record, st
 
 //r21
 void scan (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
-    SA_output(outfile, "<Scan> -> get (<Scan>);\n");
+    SA_output(outfile, "<Scan> -> get (<Ids>);\n");
     //assume get
     if (record.lexeme == "get"){
         
         get_token(p, outfile, fin, record, line_code);
         if (record.lexeme == "("){
             get_token(p, outfile, fin, record, line_code);
-            ids(p, outfile, fin, record, line_code);
+            ids_SCA(p, outfile, fin, record, line_code);
             if(record.lexeme == ")"){
                 get_token(p, outfile, fin, record, line_code);
                 if (record.lexeme == ";"){
                     get_token(p, outfile, fin, record, line_code);
                     //? not sure if I should use empty after semicolons
-                    empty(p, outfile, fin, record, line_code);
+                    //empty(p, outfile, fin, record, line_code);
                 }
                 else{
                     error(p, outfile, fin, record, line_code);
@@ -705,7 +795,7 @@ void scan (char *&p, ofstream & outfile, fstream & fin, LA_output & record, stri
         }
     }
     
-
+    
 }
 
 //r20
@@ -721,10 +811,10 @@ void print(char *&p, ofstream & outfile, fstream & fin, LA_output & record, stri
             if (record.lexeme == ")"){
                 get_token(p, outfile, fin, record, line_code);
                 //OUTPUT THE EXPRESSION
-                //get_instr(STDOUT, nil);
+                gen_instr("STDOUT", 0);
                 
                 if (record.lexeme == ";"){
-                    get_token(p, outfile, fin, record, line_code);
+                    //get_token(p, outfile, fin, record, line_code);
                 }
                 else{
                     error(p, outfile, fin, record, line_code);
@@ -742,6 +832,7 @@ void print(char *&p, ofstream & outfile, fstream & fin, LA_output & record, stri
 }
 
 //r19p
+//NOT CALLED
 void return_rp(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output(outfile, "<ReturnP> -> ;|<Expression>;\n");
     
@@ -757,16 +848,17 @@ void return_rp(char *&p, ofstream & outfile, fstream & fin, LA_output & record, 
             error(p, outfile, fin, record, line_code);
         }
     }
-
+    
 }
 
 //r19
+//NOT CALLED
 void return_r (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output(outfile, "<Return> -> return <ReturnP>\n");
     
     if (record.lexeme == "return"){
-       get_token(p, outfile, fin, record, line_code);
-       return_rp (p, outfile, fin, record, line_code);
+        get_token(p, outfile, fin, record, line_code);
+        return_rp (p, outfile, fin, record, line_code);
     }
     else{
         error(p, outfile, fin, record, line_code);
@@ -785,7 +877,7 @@ void if_rp(char *&p, ofstream & outfile, fstream & fin, LA_output & record, stri
         get_token(p, outfile, fin, record, line_code);
         statement(p, outfile, fin, record, line_code);
         if (record.lexeme == "endif"){
-            //back_patch (instr_address);
+            back_patch (instr_address);
             get_token(p, outfile, fin, record, line_code);
         }
         else{
@@ -796,7 +888,7 @@ void if_rp(char *&p, ofstream & outfile, fstream & fin, LA_output & record, stri
     else{
         error(p, outfile, fin, record, line_code);
     }
-
+    
 }
 
 
@@ -805,10 +897,12 @@ void if_r (char *&p, ofstream & outfile, fstream & fin, LA_output & record, stri
     SA_output(outfile, "<If> -> if ( <Condition> ) <Statement> <ifP> \n");
     
     if (record.lexeme == "if"){
-        //? NOT SURE WHY WE NEED THIS
+        //? NOT SURE WHY WE NEED THIS ?
         //? IS INSTR_ADDRESS(); A FUNCTION OR A PARAMETER?
         //for the back_patch line # i.e. when the if condition starts
-        //addr = instr_address();
+        
+        instr_address = instruct_Table.instr_row_num;
+        
         get_token(p, outfile, fin, record, line_code);
         if (record.lexeme == "("){
             get_token(p, outfile, fin, record, line_code);
@@ -816,7 +910,7 @@ void if_r (char *&p, ofstream & outfile, fstream & fin, LA_output & record, stri
             if(record.lexeme == ")"){
                 get_token(p, outfile, fin, record, line_code);
                 statement(p, outfile, fin, record, line_code);
-                
+                back_patch (instr_address);
                 if_rp(p, outfile, fin, record, line_code);
             }
             else{
@@ -826,7 +920,7 @@ void if_r (char *&p, ofstream & outfile, fstream & fin, LA_output & record, stri
         else{
             error(p, outfile, fin, record, line_code);
         }
-
+        
     }
 }
 
@@ -836,22 +930,33 @@ void assign (char *&p, ofstream & outfile, fstream & fin, LA_output & record, st
     
     if (record.token == "identifier"){
         
-        
-        /*
+         /*
          want to save the identifier to find the memory address
          which will be used to insert as an operand for the instruction
          table.
-         save = record.token
+         save = record.lexeme
          */
+        
+        id_lexeme = record.lexeme;
+        
+        if (!(lookupSymbolTable(record.lexeme))){
+            cout << "<Assign>: could not find lexeme" << endl;
+            exit(0);
+        }
+        
         get_token(p, outfile, fin, record, line_code);
         if (record.lexeme == "="){
             get_token(p, outfile, fin, record, line_code);
             if ((((((record.token == "identifier") || (record.token == "integer")) || (record.token == "real")) || (record.lexeme == "true")) || (record.lexeme == "false")) || (record.lexeme == "(")) {
                 expression(p, outfile, fin, record, line_code);
-                /*
+                 /*
                  pop the arithmetic operation results to left-side of equal sign
-                 get_instr(POPM, get_address (save));
+                 get_instr("POPM", get_address(id_type));
                  */
+                if (lookupSymbolTable(id_lexeme)){
+                    gen_instr("POPM", pop_mem_addr);
+                }
+
                 if (record.lexeme == ";"){
                     get_token(p, outfile, fin, record, line_code);
                 }
@@ -922,13 +1027,23 @@ void statement(char *&p, ofstream & outfile, fstream & fin, LA_output & record, 
 //r14p
 void statementlistP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output(outfile, "<Statement ListP> -><Empty>|<Statement List\n");
-
-    while (((record.token == "identifier") || (record.token == "keyword")) || (record.lexeme == "{")){
-        statement(p, outfile, fin, record, line_code);
+    
+    if (end_file){
+        cout << "exit from statementlistP" << endl;
+        //exit(0);
     }
+    else{
+        while (((record.token == "identifier") || (record.token == "keyword")) || (record.lexeme == "{")){
+            statement(p, outfile, fin, record, line_code);
+        }
+    }
+    
+    
     
     //empty
     SA_output (outfile, "<Statement List Prime> -> <Empty>\n");
+    
+    
     
 }
 
@@ -944,7 +1059,7 @@ void idsP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, strin
     SA_output(outfile, "<Ids Prime> ->  <Empty> |, <Ids>\n");
     if (record.lexeme == ","){
         get_token(p, outfile, fin, record, line_code);
-        ids(p, outfile, fin, record, line_code);
+        ids_DEC(p, outfile, fin, record, line_code);
     }
     else{
         //empty
@@ -952,14 +1067,94 @@ void idsP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, strin
     }
 }
 
-//r13
+//r13 PRI
+void ids_PRI(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<IDs> ->  <identifier> <IDs Prime>\n");
+    if (record.token == "identifier"){
+        if ((lookupSymbolTable(record.lexeme))){
+            //assume called by declaration
+            //insert identifier to symbol table
+            
+            get_token(p, outfile, fin, record, line_code);
+            //idsP(p, outfile, fin, record, line_code);
+        }
+        else{
+            error(p, outfile, fin, record, line_code);
+        }
+    }
+    else{
+        error(p, outfile, fin, record, line_code);
+    }
+}
+
+//r13 SCA
+void ids_SCA(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<IDs> ->  <identifier> <IDs Prime>\n");
+    if (record.token == "identifier"){
+        if ((lookupSymbolTable(record.lexeme))){
+            //assume called by declaration
+            //insert identifier to symbol table
+            gen_instr("STDIN", pop_mem_addr);
+            get_token(p, outfile, fin, record, line_code);
+            //idsP(p, outfile, fin, record, line_code);
+        }
+        else{
+            error(p, outfile, fin, record, line_code);
+        }
+    }
+    else{
+        error(p, outfile, fin, record, line_code);
+    }
+}
+
+//r13 DEC
+void ids_DEC(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<IDs> ->  <identifier> <IDs Prime>\n");
+    if (record.token == "identifier"){
+        
+        if (!(lookupSymbolTable(record.lexeme))){
+            //assume called by declaration
+            //insert identifier to symbol table
+            addIdToSymTable(record.lexeme);
+            get_token(p, outfile, fin, record, line_code);
+            idsP(p, outfile, fin, record, line_code);
+        }
+        else{
+            error(p, outfile, fin, record, line_code);
+        }
+    }
+    else{
+        error(p, outfile, fin, record, line_code);
+    }
+}
+/*
+//r13 original
 void ids(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output(outfile, "<IDs> ->  <identifier> <IDs Prime>\n");
     if (record.token == "identifier"){
-      
-        //PROBLEM:
-        //what if ids is called under expression so we get something like
-        //a(a,b) that isn't expected to be STDIN?
+        
+ 
+         Problem:
+         IDS is called by three separate productions each of which expect something
+         different with regard to the assembly instructions
+         1. If called by <Declaration>, we don't expect the identifier to exist in the symbol table
+         2. If called by <Scan>, we expect the identifier to exist for STDIN
+         3. If called by <Primary Prime>, we expect the identifier to exist; like a while statement
+ 
+        
+        //Office Hours Solution:
+        //I need to have separate IDS productions
+        //3 separate ID productions for each problem
+        
+        if (!(lookupSymbolTable(record.lexeme))){
+            //assume called by declaration
+            //insert identifier to symbol table
+            addIdToSymTable(record.lexeme);
+        }
+        else{
+            //assume called by scan
+            //STDIN
+        }
         
         get_token(p, outfile, fin, record, line_code);
         idsP(p, outfile, fin, record, line_code);
@@ -969,12 +1164,13 @@ void ids(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string
         error(p, outfile, fin, record, line_code);
     }
 }
+*/
 
 //r12
 void declaration(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output(outfile, "<Declaration> ->  <Qualifier> <Ids>\n");
     qualifier(p, outfile, fin, record, line_code);
-    ids(p, outfile, fin, record, line_code);
+    ids_DEC(p, outfile, fin, record, line_code);
 }
 
 //r11p
@@ -989,7 +1185,7 @@ void declarationlistP(char *&p, ofstream & outfile, fstream & fin, LA_output & r
     //empty
     SA_output (outfile, "<Declaration List Prime> -> <Empty>\n");
     
-
+    
 }
 
 //r11
@@ -1015,6 +1211,8 @@ void optDeclarationlist(char *&p, ofstream & outfile, fstream & fin, LA_output &
     
     //empty
     SA_output (outfile, "<Opt Declaration List> -> <Empty>\n");
+    if (record.lexeme.length() > 0){}
+        //SA(p, outfile, fin, record, line_code);
     
 }
 
@@ -1045,6 +1243,7 @@ void qualifier (char *&p, ofstream & outfile, fstream & fin, LA_output & record,
     if (((record.lexeme == "int") || (record.lexeme == "real")) || (record.lexeme == "boolean")){
         //qualifier comes before identifier
         //save type (global variable) as this lexeme and use it for all of the IDs provided.
+        id_type = record.lexeme;
         //error checking: set global type to "NO TYPE" after done with all identifiers
         get_token(p, outfile, fin, record, line_code);
     }
@@ -1057,7 +1256,7 @@ void qualifier (char *&p, ofstream & outfile, fstream & fin, LA_output & record,
 void parameter (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output(outfile, "<Parameter> -> <Ids> : <Qualifier>\n");
     
-    ids(p, outfile, fin, record, line_code);
+    ids_DEC(p, outfile, fin, record, line_code);
     if (record.lexeme == ":"){
         get_token(p, outfile, fin, record, line_code);
         qualifier(p, outfile, fin, record, line_code);
@@ -1077,6 +1276,8 @@ void parameterlistP(char *&p, ofstream & outfile, fstream & fin, LA_output & rec
     
     //empty
     SA_output (outfile, "<Parameter List Prime> -> <Empty>\n");
+    if (record.lexeme.length() > 0){}
+        //SA(p, outfile, fin, record, line_code);
     
 }
 
@@ -1085,7 +1286,7 @@ void parameterlist(char *&p, ofstream & outfile, fstream & fin, LA_output & reco
     SA_output(outfile, "<Parameter List> -> <Parameter> <Parameter List Prime>\n");
     parameter(p, outfile, fin, record, line_code);
     parameterlistP(p, outfile, fin, record, line_code);
-
+    
 }
 
 //r5
@@ -1096,6 +1297,9 @@ void optParameterlist (char *&p, ofstream & outfile, fstream & fin, LA_output & 
     }
     else{
         //empty
+        if (record.lexeme.length() > 0){}
+            //SA(p, outfile, fin, record, line_code);
+        
     }
 }
 
@@ -1128,11 +1332,11 @@ void function_r(char *&p, ofstream & outfile, fstream & fin, LA_output & record,
             error(p, outfile, fin, record, line_code);
         }
     }
-
+    
     else{
         error(p, outfile, fin, record, line_code);
     }
-  
+    
 }
 
 //r3p
@@ -1144,7 +1348,7 @@ void functiondefinitionsP(char *&p, ofstream & outfile, fstream & fin, LA_output
         functiondefinitions(p, outfile, fin, record, line_code);
     }
     else{
-       //empty
+        //empty
         SA_output (outfile, "<Function Definitions Prime> -> <Empty>\n");
     }
 }
@@ -1161,7 +1365,7 @@ void functiondefinitions(char *&p, ofstream & outfile, fstream & fin, LA_output 
 //NOT CALLED
 void optFunctiondefinitions(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output(outfile, "<Opt Function Definitions> -> <Opt Function Definitions> | <Empty> \n");
-   
+    
     
     if (record.lexeme == "function"){
         functiondefinitions(p, outfile, fin, record, line_code);
@@ -1177,7 +1381,7 @@ void optFunctiondefinitions(char *&p, ofstream & outfile, fstream & fin, LA_outp
 void rat18s (char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output(outfile, "<rat18s> -><Opt Function Definitions > %% <Opt Declaration List> <Statement List>\n");
     
-    optFunctiondefinitions(p, outfile, fin, record, line_code);
+    //optFunctiondefinitions(p, outfile, fin, record, line_code);
     if (record.lexeme == "%%"){
         get_token(p, outfile, fin, record, line_code);
         optDeclarationlist(p, outfile, fin, record, line_code);
@@ -1186,13 +1390,16 @@ void rat18s (char *&p, ofstream & outfile, fstream & fin, LA_output & record, st
     else{
         error(p, outfile, fin, record, line_code);
     }
-
+    
 }
 
 //The start of the syntax analyzation
 void SA(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
-    new_line(p, outfile, fin, record, line_code);
+    
     get_token(p, outfile, fin, record, line_code);
+    rat18s(p, outfile, fin, record, line_code);
+    
+    /*
     if (record.lexeme == "function"){
         rat18s(p, outfile, fin, record, line_code);
     }
@@ -1204,7 +1411,8 @@ void SA(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string 
     }
     else{
         empty(p, outfile, fin, record, line_code);
-    }
+    }\
+     */
 }
 /////////////////////////////////////////////////////////////////
 
@@ -1244,8 +1452,15 @@ int main() {
     
     
     
+    new_line(lex_candid, outfile, fin, record, line_code);
+    //get_token(lex_candid, outfile, fin, record, line_code);
     SA(lex_candid, outfile, fin, record, line_code);
     
+    printSymbolTable();
+
+    
+    print_instr_t();
+
     
     
     fin.close();
