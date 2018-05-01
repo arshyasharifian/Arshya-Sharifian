@@ -546,10 +546,12 @@ void primary(char *&p, ofstream & outfile, fstream & fin, LA_output & record, st
     }
     else if (record.lexeme == "true"){
         get_token(p, outfile, fin, record, line_code);
+        gen_instr ("PUSHI", 1);
         SA_output(outfile, "<Primary> -> true\n");
     }
     else if (record.lexeme == "false"){
         get_token(p, outfile, fin, record, line_code);
+        gen_instr ("PUSHI", 0);
         SA_output(outfile, "<Primary> -> false\n");
         
     }
@@ -804,7 +806,7 @@ void print(char *&p, ofstream & outfile, fstream & fin, LA_output & record, stri
                 gen_instr("STDOUT", 0);
                 
                 if (record.lexeme == ";"){
-                    //get_token(p, outfile, fin, record, line_code);
+                    get_token(p, outfile, fin, record, line_code);
                 }
                 else{
                     error(p, outfile, fin, record, line_code);
