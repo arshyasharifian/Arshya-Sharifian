@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include "Math.h"
 using namespace std;
 
 class Property{
@@ -10,12 +11,20 @@ public:
     int Prop_code;
     string general_use;
     string specific_use;
-    int year_built;
+    int year_built = 2017;
     int effective_year_built;
-    int SQFT_home;
+    int SQFT_home = 0;
     int num_bed;
     int num_bath;
     int recording_date;
+    //land value
+    double land_value;
+    //land base year
+    int land_base_year;
+    //improvement value
+    double imp_value;
+    //improvement base year
+    int imp_base_year;
     double tot_value;
     int address_number;
     string address_street;
@@ -24,6 +33,9 @@ public:
     double center_lat;
     double center_long;
 };
+
+//size of house (SQFT), num bedrooms, num bathrooms, price, walking distance to resturants (.5 miles away from a resturant), Flippable (land value > improvement value)
+
 
 int sum_per_square_foot = 0;
 int average_square_foot_price;
@@ -52,19 +64,35 @@ bool add_feature (int col_num, Property & new_prop, string prop_field){
             break;
         case 9: new_prop.recording_date = stoi(prop_field);
             break;
-        case 10: new_prop.tot_value = stod(prop_field);
+        case 10:
+            new_prop.land_value = stod (prop_field);
             break;
-        case 11: new_prop.address_number = stoi(prop_field);
+            //land value
+        case 11:
+            new_prop.land_base_year = stoi (prop_field);
             break;
-        case 12: new_prop.address_street = (prop_field);
+            //land base year
+        case 12:
+            new_prop.imp_value = stod (prop_field);
             break;
-        case 13: new_prop.address_city = (prop_field);
+            //improvement value
+        case 13:
+            new_prop.imp_base_year = stoi(prop_field);
             break;
-        case 14: new_prop.address_zip = stoi(prop_field);
+            //improvement base year
+        case 14: new_prop.tot_value = stod(prop_field);
             break;
-        case 15: new_prop.center_lat = stod(prop_field);
+        case 15: new_prop.address_number = stoi(prop_field);
             break;
-        case 16: new_prop.center_long = stod(prop_field);
+        case 16: new_prop.address_street = (prop_field);
+            break;
+        case 17: new_prop.address_city = (prop_field);
+            break;
+        case 18: new_prop.address_zip = stoi(prop_field);
+            break;
+        case 19: new_prop.center_lat = stod(prop_field);
+            break;
+        case 20: new_prop.center_long = stod(prop_field);
             break;
         default: cout << "error" << endl;
             return false;
@@ -84,8 +112,8 @@ bool print_prop_vector (const vector <Property> & prop_list){
         
         if (prop_list[i].year_built != prop_list[i].effective_year_built){
             if (prop_list[i].effective_year_built >=5){
-                cout << prop_list[i].AIN << endl;
-                cout << prop_list[i].effective_year_built << endl;
+                //cout << prop_list[i].AIN << endl;
+                //cout << prop_list[i].effective_year_built << endl;
             }
         }
         
@@ -108,7 +136,8 @@ vector <Property> create_property_DB(fstream & fin, string & line){
         for (int i = 0; i < line.length(); i++){
             if (line[i] == '"'){
                 i++;
-                if (column_count == 10){
+                //all the doubles
+                if (((column_count == 10) || (column_count == 12)) || (column_count == 14)){
                     i++;
                 }
                 while (line[i]!= '"'){
@@ -118,8 +147,6 @@ vector <Property> create_property_DB(fstream & fin, string & line){
                 }
             }
             if ((line[i] == ',') || i+1 == line.length()){
-               
-                
                 //cout << keyword << endl;
                 if (!(add_feature (column_count, new_prop, keyword))) exit(0);
                 keyword = "";
@@ -130,6 +157,11 @@ vector <Property> create_property_DB(fstream & fin, string & line){
                     keyword+=line[i];
             }
         }
+        
+        //if AIN of new_prop is the same as the AIN for the last property inserted in prop_list
+        //then check if new_prop.land_value_year is the same as the last property's land_value_year
+            //if its not
+        
         prop_list.push_back(new_prop);
         column_count = 0;
     }//end while
@@ -141,22 +173,121 @@ vector <Property> create_property_DB(fstream & fin, string & line){
 }
 
 
+//WEIGHTS
+
+//vector <Property> best_cand;
+
+Property best_cand;
+double user_SQFT, user_num_bed, user_num_bath, user_price, user_rest_dist, user_flip;
+double w_SQFT, w_num_bed, w_num_bath, w_price, w_rest_dist, w_flip;
+Property best;
+double best_w = 0;
+
+void find_best (const Property & cand){
+    if ((w_num_bath+w_num_bed+w_flip+w_price > best_w) && (cand.Prop_code == 100)){
+        //best = cand;
+        best_w = w_num_bath+w_num_bed+w_flip+w_price;
+        //best_cand.push_back(cand);
+        best_cand = cand;
+    }
+}
+
+//these shoud be rule
+ void get_weight_baths(const Property & cand){
+    w_num_bath = user_num_bath * (cand.num_bath/2);
+    
+ 
+ }
+
+//Han notes:
+//Did you like or dislike this?
+//Like: then when did you like: weigh these factors more
+//Dislike: why did you dislike:
+//When you wanna buy a house what is the most important factor?
+//HAVE 10 FEATURES: Pick 3 that are the most important and least important
+//MOST IMPORTANT: 1.5; MEDIAN: .8; LEAST IMPORTANT.2
+
+//keep a project simple and provide a number to determine the investibility of the price
+
+//PREFERENCE
+//number of bedrooms
+//
+
+
+//this should be a rule
+void get_weight_beds(const Property & cand){
+    w_num_bed = user_num_bed * (cand.num_bed/3);
+    get_weight_baths(cand);
+ 
+}
+
+void get_weight_price(const Property & cand){
+    w_price = user_price * pow(((cand.tot_value/cand.SQFT_home)/(average_square_foot_price)), 2);
+    //get_weight_beds(cand);
+    find_best (cand);
+    
+}
+
+
+
+void get_weight_flip(const Property & cand){
+    w_flip = user_flip * pow((cand.land_value/cand.imp_value), 2);
+    get_weight_price(cand);
+    
+}
+ 
+ void get_weights (const Property & cand){
+    get_weight_flip(cand);
+ }
+
+
+//RULES
+
+void rule3 (const Property & cand){
+    
+    //if (cand.imp_base_year < 2010){
+        //weight1 (cand);
+    //}
+    
+    /*
+    if (best.year_built > cand.year_built){
+        best = cand;
+        //cout << "this is a good property" << endl;
+        //cout << cand.address_number << " " << cand.address_street << endl;
+    }
+     */
+}
+
+
+void rule2(const Property & cand){
+    //if (cand.land_value >= cand.imp_value){
+        rule3(cand);
+        //weight1(cand);
+    //}
+}
 
 
 
 void rule1(const Property & cand){
-        if (cand.effective_year_built == cand.year_built)
-            if (cand.effective_year_built < 2000){
-                cout << "this is a good property" << endl;
-                cout << cand.AIN << endl;
-            }
+        //if (cand.effective_year_built == cand.year_built)
+            //if (cand.effective_year_built < 2008){
+                //if (cand.effective_year_built > 1800){
+                    rule2(cand);
+                //}
+            //}
 }
 
  void rule0 (const Property & cand, const int & average_square_foot_price){
-    if (cand.SQFT_home <= average_square_foot_price){
+    
+     //if (cand.land_base_year == 1975){
+         rule1(cand);
+     //}
+     /*
+     if (cand.SQFT_home <= average_square_foot_price){
         //proceed to next rule
         rule1(cand);
     }
+     */
  }
  
  
@@ -185,21 +316,202 @@ void rule1(const Property & cand){
  
  */
 
+double deg2rad(double deg){
+    return deg * (M_PI/180);
+}
+
+double get_distance(double lat1, double lon1, double lat2, double lon2){
+    
+    int r = 6371;
+    double dLat = deg2rad (lat2- lat1);
+    double dLon = deg2rad (lon2 - lon1);
+    
+    double a = sin(dLat/2) * sin(dLat/2) + cos(deg2rad(lat1)) * cos(deg2rad(lat2)) * sin(dLon/2) * sin(dLon/2);
+    double c = 2 * atan2(sqrt(a), sqrt(1-a));
+    double d = r * c; //in radian
+    
+    double toMiles = d * .62137;
+    
+    return toMiles;
+}
 
 
 int main() {
     
+    
+    
+    
+    
     string line;
     fstream fin;
-    fin.open("p1.csv");
+    fin.open("np1.csv");
     getline(fin, line);
     vector <Property> prop_list;
     
+    
+    //create DB
     prop_list = create_property_DB(fin, line);
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+    
+    //apples to apples: change property values using recently sold neighbor information
+    
+    /*PS
+     for all properties
+        if property land base year is <2016
+            then iterate through property list (don't consider same property)
+                while (!(updated)):
+                if property land base year is >=2016
+                if property is within .1 miles
+                if property is within 100 SQFT of property
+                if property has similar number of beds and baths
+                    bool updated = true;
+                    then calculate the price per sqft for the property whose land base year is >= 2016
+                    calculate property x's improved value according to this price per sqft formula
+                    then update property x's land value such that it is equal to nieghbors property
+                    then update property x's total value = land value + improved value
+     */
+    
+    cout << "gonna updated" << endl;
+    
+    bool updated = false;
+    int price_per_sq_foot = 0;
+    Property cand;
+    double sim_dist = 0;
+    double best_min_dist = 100;
+    
+    for (int i = 0; i < prop_list.size(); i++){
+        if (prop_list[i].land_base_year < 2016){
+            int avoid_index = i;
+            updated = false;
+            sim_dist = 0;
+            best_min_dist = 100000000;
+            for (int k = 0; k < prop_list.size(); k++){
+                    if (((k!=avoid_index) && (prop_list[k].land_base_year >2015)) && (prop_list[k].Prop_code == prop_list[i].Prop_code)){
+                        sim_dist+=pow(1 + (get_distance(prop_list[i].center_lat, prop_list[i].center_long, prop_list[k].center_lat, prop_list[k].center_long)), 2);
+                        if (prop_list[k].num_bed > 0){
+                                    sim_dist+=pow((prop_list[i].num_bed+prop_list[i].num_bath)/(prop_list[k].num_bed + prop_list[k].num_bath), 2);
+                        }
+                        else{
+                            sim_dist+=100;
+                        }
+                        
+                        if (prop_list[k].SQFT_home > 0){
+                                    sim_dist+=pow((prop_list[i].SQFT_home/prop_list[k].SQFT_home), 2);
+                        }
+                        else{
+                            sim_dist+=100;
+                        }
+                        
+                        //if the candidate property is closer (in features) than previous candidate
+                        if (sim_dist < best_min_dist){
+                            cand = prop_list[k];
+                            best_min_dist = sim_dist;
+                        }
+
+                        sim_dist = 0;
+                    }//if not same property
+            }//for k
+            price_per_sq_foot = cand.imp_value/cand.SQFT_home;
+            prop_list[i].imp_value = price_per_sq_foot * prop_list[i].SQFT_home;
+            prop_list[i].land_value = cand.land_value;
+            prop_list[i].tot_value = prop_list[i].imp_value + prop_list[i].land_value;
+            prop_list[i].land_base_year = 2016;
+        }//if land base year is < 2016
+    }//for i
+    
+///////////////////////////////////////////////////////////////////////////////////////////////
+    
+    
+    /*
+     
+     */
+    
+    //get input about what property aspects are important to user:
+        //size of house (SQFT), num bedrooms, num bathrooms, price, walking distance to resturants (.5 miles away from a resturant), Flippable (land value > improvement value)
+    
+    cout << "from 0 to 100, how important is a large home?" << endl;
+    cin >> user_SQFT;
+    //cout << "\nfrom 0 to 100 how important is having a higher than average number of bedrooms?" << endl;
+    //cin >> user_num_bed;
+    //cout << "\nfrom 0 to 100 how important is having a higher than average number of bathrooms?" << endl;
+    //cin >> user_num_bath;
+    cout << "\nfrom 0 to 100 how important is flip potential?" << endl;
+    cin >> user_flip;
+    
+    bool rate_prop = true;
+    
+    while (rate_prop){
+        for (int i = 0; i < prop_list.size(); i++){
+            cout << prop_list[i].address_number << " " << prop_list[i].address_street << " " << prop_list[i].tot_value << endl;
+            //get_weights(prop_list[i]);
+        }
+        
+        //for (int k = 0; k < best_cand.size(); k++){
+            cout << best_cand.address_number << " " << best_cand.address_street << endl;
+        //}
+        
+        cout << "do you want to continue, enter 0 for no" << endl;
+        cin >> rate_prop;
+        
+    }//end while
+    
+    
+    
+    //loop while the user wants to rate properties:
+        //show user 10 properties the system selected and ask user whether they like it or hate it:
+            //if hate it, determine why they don't like it (going through the aspects) and decrease weight of those aspects
+    
+    
+    //print_prop_vector (prop_list);
+    
+    
+    
+    
+    
+    
+    //call weights here
+    
+    exit(0);
     
     for (int i = 0; i < prop_list.size(); i++){
         rule0(prop_list[i], average_square_foot_price);
+        //weight1(prop_list[i]);
+        
     }
+    
+    cout << best.address_number << " " << best.address_street << endl;
+    
+    bool thumbs_up;
+    
+    /*neural network changing formuals
+    
+    for (int i = 0; i < best_cand.size(); i++){
+        thumbs_up = 0;
+        cout << "Enter 1 if this property good, else enter anything." << endl;
+        //cout << best_cand[i].address_number << " " << best_cand[i].address_street << endl;
+        cin >> thumbs_up;
+        
+        if (thumbs_up){
+            //user1+=.10;
+            //user2+=.10;
+        }
+        else{
+            //user1-=.10;
+            //user2-=.10;
+        }
+    }
+     
+     */
+    
+    for (int i = 0; i < prop_list.size(); i++){
+        rule0(prop_list[i], average_square_foot_price);
+        //weight1(prop_list[i]);
+        
+    }
+    
+    cout << best.address_number << " " << best.address_street << endl;
+
     
     //print_prop_vector(prop_list);
 
