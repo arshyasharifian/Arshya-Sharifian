@@ -45,9 +45,9 @@ void gen_instr(string op, int oprand)
     instr_address++;
 }
 
-void print_instr_t (){
+void print_instr_t (ofstream& ofs){
     for (int i = 0; i < instruct_Table.instr_row_num; i++){
-        cout << instruct_Table.instr_line[i] << "\t"
+        ofs << instruct_Table.instr_line[i] << "\t"
              << instruct_Table.op[i] << "\t"
         << instruct_Table.operand[i] << endl;
     }
@@ -134,9 +134,9 @@ bool lookupSymbolTable(string token) {
     //return (pVal == end(symbol_table.id_array));
 }
 //function to print the symbol table
-void printSymbolTable() {
+void printSymbolTable(ofstream& ofs) {
     for (int i = 0; i < st_row_num; i++) {
-        cout << symbol_table.id_array[i] << "\t"
+        ofs << symbol_table.id_array[i] << "\t"
         << symbol_table.id_type[i] << "\t"
         << symbol_table.mem_address[i] << endl;
     }
@@ -399,8 +399,8 @@ void error(char *&p, ofstream & outfile, fstream & fin, LA_output & record, stri
     SA_output_error(outfile, record.lexeme, line_counter-1);
     
     cout << "symbol table and instruction table before error: \n";
-    printSymbolTable();
-    print_instr_t();
+    printSymbolTable(outfile);
+    print_instr_t(outfile);
     
     exit(0);
     
@@ -429,8 +429,8 @@ void get_token(char *&p, ofstream & outfile, fstream & fin, LA_output & record, 
             }
             else{
                 //cout << "empty file" << endl;
-                outfile.close();
-                fin.close();
+                //outfile.close();
+                //fin.close();
                 //exit(0);
             }
             record = lexer(p, outfile, fin, line_code);
@@ -458,8 +458,8 @@ void new_line(char *&p, ofstream & outfile, fstream & fin, LA_output & record, s
     }
     else {
         //cout << "empty file" << endl;
-        outfile.close();
-        fin.close();
+        //outfile.close();
+        //fin.close();
         //exit(0);
     }
 }
@@ -1050,7 +1050,34 @@ void statementlist(char *&p, ofstream & outfile, fstream & fin, LA_output & reco
 }
 
 //r13p
-void idsP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+void idsP_PRI(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<Ids Prime> ->  <Empty> |, <Ids>\n");
+    if (record.lexeme == ","){
+        get_token(p, outfile, fin, record, line_code);
+        ids_PRI(p, outfile, fin, record, line_code);
+    }
+    else{
+        //empty
+        SA_output (outfile, "<Ids Prime> -> <Empty>\n");
+    }
+}
+
+//r13p
+void idsP_SCA(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
+    SA_output(outfile, "<Ids Prime> ->  <Empty> |, <Ids>\n");
+    if (record.lexeme == ","){
+        get_token(p, outfile, fin, record, line_code);
+        ids_SCA(p, outfile, fin, record, line_code);
+    }
+    else{
+        //empty
+        SA_output (outfile, "<Ids Prime> -> <Empty>\n");
+    }
+}
+
+
+//r13p
+void idsP_DEC(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output(outfile, "<Ids Prime> ->  <Empty> |, <Ids>\n");
     if (record.lexeme == ","){
         get_token(p, outfile, fin, record, line_code);
@@ -1063,15 +1090,13 @@ void idsP(char *&p, ofstream & outfile, fstream & fin, LA_output & record, strin
 }
 
 //r13 PRI
+//PRIMARY
 void ids_PRI(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output(outfile, "<IDs> ->  <identifier> <IDs Prime>\n");
     if (record.token == "identifier"){
         if ((lookupSymbolTable(record.lexeme))){
-            //assume called by declaration
-            //insert identifier to symbol table
-            
             get_token(p, outfile, fin, record, line_code);
-            //idsP(p, outfile, fin, record, line_code);
+            idsP_PRI(p, outfile, fin, record, line_code);
         }
         else{
             error(p, outfile, fin, record, line_code);
@@ -1083,16 +1108,15 @@ void ids_PRI(char *&p, ofstream & outfile, fstream & fin, LA_output & record, st
 }
 
 //r13 SCA
+//SCAN
 void ids_SCA(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output(outfile, "<IDs> ->  <identifier> <IDs Prime>\n");
     if (record.token == "identifier"){
         if ((lookupSymbolTable(record.lexeme))){
-            //assume called by declaration
-            //insert identifier to symbol table
             gen_instr("STDIN", 0);
             gen_instr("POPM", pop_mem_addr);
             get_token(p, outfile, fin, record, line_code);
-            //idsP(p, outfile, fin, record, line_code);
+            idsP_SCA(p, outfile, fin, record, line_code);
         }
         else{
             error(p, outfile, fin, record, line_code);
@@ -1104,16 +1128,16 @@ void ids_SCA(char *&p, ofstream & outfile, fstream & fin, LA_output & record, st
 }
 
 //r13 DEC
+//DECLARATION
 void ids_DEC(char *&p, ofstream & outfile, fstream & fin, LA_output & record, string & line_code){
     SA_output(outfile, "<IDs> ->  <identifier> <IDs Prime>\n");
     if (record.token == "identifier"){
         
         if (!(lookupSymbolTable(record.lexeme))){
-            //assume called by declaration
             //insert identifier to symbol table
             addIdToSymTable(record.lexeme);
             get_token(p, outfile, fin, record, line_code);
-            idsP(p, outfile, fin, record, line_code);
+            idsP_DEC(p, outfile, fin, record, line_code);
         }
         else{
             error(p, outfile, fin, record, line_code);
@@ -1446,20 +1470,19 @@ int main() {
     outfile << setw(10)<<"token"<<"\t\t\t" << "lexeme" <<endl;
     outfile << "--------------------------------------------------------------\n";
     
-    
-    
     new_line(lex_candid, outfile, fin, record, line_code);
     //get_token(lex_candid, outfile, fin, record, line_code);
     SA(lex_candid, outfile, fin, record, line_code);
     
+    //just in case
     gen_instr("LABEL", 0);
-    printSymbolTable();
-
     
-    print_instr_t();
-    
-    
-
+    outfile << endl;
+    outfile << "Symbol Table: " << endl;
+    printSymbolTable(outfile);
+    outfile << endl;
+    outfile << "Instruction Table: " << endl;
+    print_instr_t(outfile);
     
     
     fin.close();
