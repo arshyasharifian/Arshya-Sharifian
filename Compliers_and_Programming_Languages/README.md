@@ -1,4 +1,4 @@
-I wrote a compiler for a language called <rat18s>.  
+I wrote a compiler for a language called rat18s.  
 
 There are three major components to this project:
 1. Lexical Analyzer: To create the lexical analyzer I constructed a RE (regular expression) for each
