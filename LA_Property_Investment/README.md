@@ -15,10 +15,10 @@ the most.  This step provides you random homes.  For each decision it will adjus
 the program will continue until you like property.
 
 Future considerations:
--I would like to incorporate a feature that will weigh the later decisions more heavily than the first.  In other words, I think the
+1. I would like to incorporate a feature that will weigh the later decisions more heavily than the first.  In other words, I think the
 choices you make after viewing more properties is more valuable, educated than the decisions made earlier.
--Another great problem is comparing properties that aren't within a certain proximity to one another.  I had to limit my data size
+2. Another great problem is comparing properties that aren't within a certain proximity to one another.  I had to limit my data size
 to properties in one zip code, but I must think more deeply about how to compare properties across zip codes and other regions.
--With respect to supervised learning, there is a tradeoff between the speed and predictive powers of the program: the faster the program,
+3. With respect to supervised learning, there is a tradeoff between the speed and predictive powers of the program: the faster the program,
 the less predictive and accurate the recommendation.  I chose to make the testing only consist of a few properties to simply demonstrate
 the underlying logic and intent of the program.  In the future I might expand the testing period.
