@@ -1,3 +1,1 @@
 Arshya Sharifian
-
-Yo yo
