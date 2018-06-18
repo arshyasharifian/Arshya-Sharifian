@@ -1,0 +1,416 @@
+TestCase3.txt
+     token			lexeme
+--------------------------------------------------------------
+        %%			separator
+<rat18s> -><Opt Function Definitions > %% <Opt Declaration List> <Statement List>
+       int			keyword
+<Opt Declaration List> ->  <Declaration List> | <Empty>
+<Declaration List> ->  <Declaration> ; <Declaration List Prime>
+<Declaration> ->  <Qualifier> <Ids>
+<Qualifier> -> int | boolean | real
+         x			identifier
+<IDs> ->  <identifier> <IDs Prime>
+         ,			separator
+<Ids Prime> ->  <Empty> |, <Ids>
+         y			identifier
+<IDs> ->  <identifier> <IDs Prime>
+         ,			separator
+<Ids Prime> ->  <Empty> |, <Ids>
+         r			identifier
+<IDs> ->  <identifier> <IDs Prime>
+         ,			separator
+<Ids Prime> ->  <Empty> |, <Ids>
+         j			identifier
+<IDs> ->  <identifier> <IDs Prime>
+         ;			separator
+<Ids Prime> ->  <Empty> |, <Ids>
+<Ids Prime> -> <Empty>
+       int			keyword
+<Declaration List Prime> ->  <Empty> | <Declaration List>
+<Declaration List Prime> -> <Empty>
+<Declaration List> ->  <Declaration> ; <Declaration List Prime>
+<Declaration> ->  <Qualifier> <Ids>
+<Qualifier> -> int | boolean | real
+         a			identifier
+<IDs> ->  <identifier> <IDs Prime>
+         ,			separator
+<Ids Prime> ->  <Empty> |, <Ids>
+         b			identifier
+<IDs> ->  <identifier> <IDs Prime>
+         ,			separator
+<Ids Prime> ->  <Empty> |, <Ids>
+         c			identifier
+<IDs> ->  <identifier> <IDs Prime>
+         ;			separator
+<Ids Prime> ->  <Empty> |, <Ids>
+<Ids Prime> -> <Empty>
+        if			keyword
+<Declaration List Prime> ->  <Empty> | <Declaration List>
+<Declaration List Prime> -> <Empty>
+<Opt Declaration List> -> <Empty>
+<Statement List> -><Statement><Statement ListP
+<Statement> -> <Compound> | <Assign> | <If> | <Return> | <Print> | <Scan> | <While>
+<If> -> if ( <Condition> ) <Statement> <ifP> 
+         (			separator
+         x			identifier
+<Condition> -> <Expression> <Relop> <Expression>
+<Expression> -> <Term> <Expression Prime>
+<Term> -> <Factor> <Term Prime>
+<Factor> -> -<Primary> | <Primary>
+<Factor> -> <Primary>
+<Primary> ->  <Identifier> <Primary Prime> | <Integer> | (<Expression>) | <Real> | true | false
+        =<			operator
+<Primary Prime> -> (<Ids>) | Empty
+<Primary Prime> -> <Empty>
+<Term Prime> -> *<Factor> <Term Prime> | /<Factor> <Term Prime> |<Empty>
+<Term Prime> -> <Empty>
+<Expression Prime> -> + <Term> <Expression Prime> | - <Term> <Expression Prime> | Empty
+<Expression Prime> -> <Empty>
+<Relop> -> == | ^= | > | < | => | =< 
+         y			identifier
+<Expression> -> <Term> <Expression Prime>
+<Term> -> <Factor> <Term Prime>
+<Factor> -> -<Primary> | <Primary>
+<Factor> -> <Primary>
+<Primary> ->  <Identifier> <Primary Prime> | <Integer> | (<Expression>) | <Real> | true | false
+         )			separator
+<Primary Prime> -> (<Ids>) | Empty
+<Primary Prime> -> <Empty>
+<Term Prime> -> *<Factor> <Term Prime> | /<Factor> <Term Prime> |<Empty>
+<Term Prime> -> <Empty>
+<Expression Prime> -> + <Term> <Expression Prime> | - <Term> <Expression Prime> | Empty
+<Expression Prime> -> <Empty>
+         {			separator
+<Statement> -> <Compound> | <Assign> | <If> | <Return> | <Print> | <Scan> | <While>
+<Compound> -> { <Statement List> }
+         x			identifier
+<Statement List> -><Statement><Statement ListP
+<Statement> -> <Compound> | <Assign> | <If> | <Return> | <Print> | <Scan> | <While>
+<Assign> -> <Identifier> = <Expression>;
+         =			operator
+         5			integer
+<Expression> -> <Term> <Expression Prime>
+<Term> -> <Factor> <Term Prime>
+<Factor> -> -<Primary> | <Primary>
+<Factor> -> <Primary>
+<Primary> ->  <Identifier> <Primary Prime> | <Integer> | (<Expression>) | <Real> | true | false
+         ;			separator
+<Primary> -> <integer>
+<Term Prime> -> *<Factor> <Term Prime> | /<Factor> <Term Prime> |<Empty>
+<Term Prime> -> <Empty>
+<Expression Prime> -> + <Term> <Expression Prime> | - <Term> <Expression Prime> | Empty
+<Expression Prime> -> <Empty>
+         y			identifier
+<Statement ListP> -><Empty>|<Statement List
+<Statement> -> <Compound> | <Assign> | <If> | <Return> | <Print> | <Scan> | <While>
+<Assign> -> <Identifier> = <Expression>;
+         =			operator
+         6			integer
+<Expression> -> <Term> <Expression Prime>
+<Term> -> <Factor> <Term Prime>
+<Factor> -> -<Primary> | <Primary>
+<Factor> -> <Primary>
+<Primary> ->  <Identifier> <Primary Prime> | <Integer> | (<Expression>) | <Real> | true | false
+         ;			separator
+<Primary> -> <integer>
+<Term Prime> -> *<Factor> <Term Prime> | /<Factor> <Term Prime> |<Empty>
+<Term Prime> -> <Empty>
+<Expression Prime> -> + <Term> <Expression Prime> | - <Term> <Expression Prime> | Empty
+<Expression Prime> -> <Empty>
+       put			keyword
+<Statement> -> <Compound> | <Assign> | <If> | <Return> | <Print> | <Scan> | <While>
+<Print> -> put ( <Expression> );
+         (			separator
+         x			identifier
+<Expression> -> <Term> <Expression Prime>
+<Term> -> <Factor> <Term Prime>
+<Factor> -> -<Primary> | <Primary>
+<Factor> -> <Primary>
+<Primary> ->  <Identifier> <Primary Prime> | <Integer> | (<Expression>) | <Real> | true | false
+         +			operator
+<Primary Prime> -> (<Ids>) | Empty
+<Primary Prime> -> <Empty>
+<Term Prime> -> *<Factor> <Term Prime> | /<Factor> <Term Prime> |<Empty>
+<Term Prime> -> <Empty>
+<Expression Prime> -> + <Term> <Expression Prime> | - <Term> <Expression Prime> | Empty
+         y			identifier
+<Term> -> <Factor> <Term Prime>
+<Factor> -> -<Primary> | <Primary>
+<Factor> -> <Primary>
+<Primary> ->  <Identifier> <Primary Prime> | <Integer> | (<Expression>) | <Real> | true | false
+         )			separator
+<Primary Prime> -> (<Ids>) | Empty
+<Primary Prime> -> <Empty>
+<Term Prime> -> *<Factor> <Term Prime> | /<Factor> <Term Prime> |<Empty>
+<Term Prime> -> <Empty>
+<Expression Prime> -> + <Term> <Expression Prime> | - <Term> <Expression Prime> | Empty
+<Expression Prime> -> <Empty>
+         ;			separator
+        if			keyword
+<Statement> -> <Compound> | <Assign> | <If> | <Return> | <Print> | <Scan> | <While>
+<If> -> if ( <Condition> ) <Statement> <ifP> 
+         (			separator
+         x			identifier
+<Condition> -> <Expression> <Relop> <Expression>
+<Expression> -> <Term> <Expression Prime>
+<Term> -> <Factor> <Term Prime>
+<Factor> -> -<Primary> | <Primary>
+<Factor> -> <Primary>
+<Primary> ->  <Identifier> <Primary Prime> | <Integer> | (<Expression>) | <Real> | true | false
+        =>			operator
+<Primary Prime> -> (<Ids>) | Empty
+<Primary Prime> -> <Empty>
+<Term Prime> -> *<Factor> <Term Prime> | /<Factor> <Term Prime> |<Empty>
+<Term Prime> -> <Empty>
+<Expression Prime> -> + <Term> <Expression Prime> | - <Term> <Expression Prime> | Empty
+<Expression Prime> -> <Empty>
+<Relop> -> == | ^= | > | < | => | =< 
+         y			identifier
+<Expression> -> <Term> <Expression Prime>
+<Term> -> <Factor> <Term Prime>
+<Factor> -> -<Primary> | <Primary>
+<Factor> -> <Primary>
+<Primary> ->  <Identifier> <Primary Prime> | <Integer> | (<Expression>) | <Real> | true | false
+         )			separator
+<Primary Prime> -> (<Ids>) | Empty
+<Primary Prime> -> <Empty>
+<Term Prime> -> *<Factor> <Term Prime> | /<Factor> <Term Prime> |<Empty>
+<Term Prime> -> <Empty>
+<Expression Prime> -> + <Term> <Expression Prime> | - <Term> <Expression Prime> | Empty
+<Expression Prime> -> <Empty>
+         {			separator
+<Statement> -> <Compound> | <Assign> | <If> | <Return> | <Print> | <Scan> | <While>
+<Compound> -> { <Statement List> }
+         x			identifier
+<Statement List> -><Statement><Statement ListP
+<Statement> -> <Compound> | <Assign> | <If> | <Return> | <Print> | <Scan> | <While>
+<Assign> -> <Identifier> = <Expression>;
+         =			operator
+         1			integer
+<Expression> -> <Term> <Expression Prime>
+<Term> -> <Factor> <Term Prime>
+<Factor> -> -<Primary> | <Primary>
+<Factor> -> <Primary>
+<Primary> ->  <Identifier> <Primary Prime> | <Integer> | (<Expression>) | <Real> | true | false
+         ;			separator
+<Primary> -> <integer>
+<Term Prime> -> *<Factor> <Term Prime> | /<Factor> <Term Prime> |<Empty>
+<Term Prime> -> <Empty>
+<Expression Prime> -> + <Term> <Expression Prime> | - <Term> <Expression Prime> | Empty
+<Expression Prime> -> <Empty>
+         y			identifier
+<Statement ListP> -><Empty>|<Statement List
+<Statement> -> <Compound> | <Assign> | <If> | <Return> | <Print> | <Scan> | <While>
+<Assign> -> <Identifier> = <Expression>;
+         =			operator
+         2			integer
+<Expression> -> <Term> <Expression Prime>
+<Term> -> <Factor> <Term Prime>
+<Factor> -> -<Primary> | <Primary>
+<Factor> -> <Primary>
+<Primary> ->  <Identifier> <Primary Prime> | <Integer> | (<Expression>) | <Real> | true | false
+         ;			separator
+<Primary> -> <integer>
+<Term Prime> -> *<Factor> <Term Prime> | /<Factor> <Term Prime> |<Empty>
+<Term Prime> -> <Empty>
+<Expression Prime> -> + <Term> <Expression Prime> | - <Term> <Expression Prime> | Empty
+<Expression Prime> -> <Empty>
+       put			keyword
+<Statement> -> <Compound> | <Assign> | <If> | <Return> | <Print> | <Scan> | <While>
+<Print> -> put ( <Expression> );
+         (			separator
+         x			identifier
+<Expression> -> <Term> <Expression Prime>
+<Term> -> <Factor> <Term Prime>
+<Factor> -> -<Primary> | <Primary>
+<Factor> -> <Primary>
+<Primary> ->  <Identifier> <Primary Prime> | <Integer> | (<Expression>) | <Real> | true | false
+         *			operator
+<Primary Prime> -> (<Ids>) | Empty
+<Primary Prime> -> <Empty>
+<Term Prime> -> *<Factor> <Term Prime> | /<Factor> <Term Prime> |<Empty>
+         y			identifier
+<Term Prime> -> * <Factor> <Term Prime>
+<Factor> -> -<Primary> | <Primary>
+<Factor> -> <Primary>
+<Primary> ->  <Identifier> <Primary Prime> | <Integer> | (<Expression>) | <Real> | true | false
+         )			separator
+<Primary Prime> -> (<Ids>) | Empty
+<Primary Prime> -> <Empty>
+<Term Prime> -> *<Factor> <Term Prime> | /<Factor> <Term Prime> |<Empty>
+<Term Prime> -> <Empty>
+<Expression Prime> -> + <Term> <Expression Prime> | - <Term> <Expression Prime> | Empty
+<Expression Prime> -> <Empty>
+         ;			separator
+         }			separator
+<Statement List Prime> -> <Empty>
+      else			keyword
+<If Prime> -> endif | else <Statement> endif
+       put			keyword
+<Statement> -> <Compound> | <Assign> | <If> | <Return> | <Print> | <Scan> | <While>
+<Print> -> put ( <Expression> );
+         (			separator
+         x			identifier
+<Expression> -> <Term> <Expression Prime>
+<Term> -> <Factor> <Term Prime>
+<Factor> -> -<Primary> | <Primary>
+<Factor> -> <Primary>
+<Primary> ->  <Identifier> <Primary Prime> | <Integer> | (<Expression>) | <Real> | true | false
+         /			operator
+<Primary Prime> -> (<Ids>) | Empty
+<Primary Prime> -> <Empty>
+<Term Prime> -> *<Factor> <Term Prime> | /<Factor> <Term Prime> |<Empty>
+         y			identifier
+<Term Prime> -> / <Factor> <Term Prime>
+<Factor> -> -<Primary> | <Primary>
+<Factor> -> <Primary>
+<Primary> ->  <Identifier> <Primary Prime> | <Integer> | (<Expression>) | <Real> | true | false
+         )			separator
+<Primary Prime> -> (<Ids>) | Empty
+<Primary Prime> -> <Empty>
+<Term Prime> -> *<Factor> <Term Prime> | /<Factor> <Term Prime> |<Empty>
+<Term Prime> -> <Empty>
+<Expression Prime> -> + <Term> <Expression Prime> | - <Term> <Expression Prime> | Empty
+<Expression Prime> -> <Empty>
+         ;			separator
+     endif			keyword
+         }			separator
+<Statement List Prime> -> <Empty>
+     endif			keyword
+<If Prime> -> endif | else <Statement> endif
+         c			identifier
+<Statement ListP> -><Empty>|<Statement List
+<Statement> -> <Compound> | <Assign> | <If> | <Return> | <Print> | <Scan> | <While>
+<Assign> -> <Identifier> = <Expression>;
+         =			operator
+         a			identifier
+<Expression> -> <Term> <Expression Prime>
+<Term> -> <Factor> <Term Prime>
+<Factor> -> -<Primary> | <Primary>
+<Factor> -> <Primary>
+<Primary> ->  <Identifier> <Primary Prime> | <Integer> | (<Expression>) | <Real> | true | false
+         +			operator
+<Primary Prime> -> (<Ids>) | Empty
+<Primary Prime> -> <Empty>
+<Term Prime> -> *<Factor> <Term Prime> | /<Factor> <Term Prime> |<Empty>
+<Term Prime> -> <Empty>
+<Expression Prime> -> + <Term> <Expression Prime> | - <Term> <Expression Prime> | Empty
+         b			identifier
+<Term> -> <Factor> <Term Prime>
+<Factor> -> -<Primary> | <Primary>
+<Factor> -> <Primary>
+<Primary> ->  <Identifier> <Primary Prime> | <Integer> | (<Expression>) | <Real> | true | false
+         ;			separator
+<Primary Prime> -> (<Ids>) | Empty
+<Primary Prime> -> <Empty>
+<Term Prime> -> *<Factor> <Term Prime> | /<Factor> <Term Prime> |<Empty>
+<Term Prime> -> <Empty>
+<Expression Prime> -> + <Term> <Expression Prime> | - <Term> <Expression Prime> | Empty
+<Expression Prime> -> <Empty>
+         c			identifier
+<Statement> -> <Compound> | <Assign> | <If> | <Return> | <Print> | <Scan> | <While>
+<Assign> -> <Identifier> = <Expression>;
+         =			operator
+         a			identifier
+<Expression> -> <Term> <Expression Prime>
+<Term> -> <Factor> <Term Prime>
+<Factor> -> -<Primary> | <Primary>
+<Factor> -> <Primary>
+<Primary> ->  <Identifier> <Primary Prime> | <Integer> | (<Expression>) | <Real> | true | false
+         -			operator
+<Primary Prime> -> (<Ids>) | Empty
+<Primary Prime> -> <Empty>
+<Term Prime> -> *<Factor> <Term Prime> | /<Factor> <Term Prime> |<Empty>
+<Term Prime> -> <Empty>
+<Expression Prime> -> + <Term> <Expression Prime> | - <Term> <Expression Prime> | Empty
+         b			identifier
+<Term> -> <Factor> <Term Prime>
+<Factor> -> -<Primary> | <Primary>
+<Factor> -> <Primary>
+<Primary> ->  <Identifier> <Primary Prime> | <Integer> | (<Expression>) | <Real> | true | false
+         ;			separator
+<Primary Prime> -> (<Ids>) | Empty
+<Primary Prime> -> <Empty>
+<Term Prime> -> *<Factor> <Term Prime> | /<Factor> <Term Prime> |<Empty>
+<Term Prime> -> <Empty>
+<Expression Prime> -> + <Term> <Expression Prime> | - <Term> <Expression Prime> | Empty
+<Expression Prime> -> <Empty>
+         c			identifier
+<Statement> -> <Compound> | <Assign> | <If> | <Return> | <Print> | <Scan> | <While>
+<Assign> -> <Identifier> = <Expression>;
+         =			operator
+         a			identifier
+<Expression> -> <Term> <Expression Prime>
+<Term> -> <Factor> <Term Prime>
+<Factor> -> -<Primary> | <Primary>
+<Factor> -> <Primary>
+<Primary> ->  <Identifier> <Primary Prime> | <Integer> | (<Expression>) | <Real> | true | false
+         /			operator
+<Primary Prime> -> (<Ids>) | Empty
+<Primary Prime> -> <Empty>
+<Term Prime> -> *<Factor> <Term Prime> | /<Factor> <Term Prime> |<Empty>
+         b			identifier
+<Term Prime> -> / <Factor> <Term Prime>
+<Factor> -> -<Primary> | <Primary>
+<Factor> -> <Primary>
+<Primary> ->  <Identifier> <Primary Prime> | <Integer> | (<Expression>) | <Real> | true | false
+         ;			separator
+<Primary Prime> -> (<Ids>) | Empty
+<Primary Prime> -> <Empty>
+<Term Prime> -> *<Factor> <Term Prime> | /<Factor> <Term Prime> |<Empty>
+<Term Prime> -> <Empty>
+<Expression Prime> -> + <Term> <Expression Prime> | - <Term> <Expression Prime> | Empty
+<Expression Prime> -> <Empty>
+<Statement List Prime> -> <Empty>
+
+Symbol Table: 
+x	int	2000
+y	int	2001
+r	int	2002
+j	int	2003
+a	int	2004
+b	int	2005
+c	int	2006
+
+Instruction Table: 
+1	PUSHM	2000
+2	PUSHM	2001
+3	LEQ	0
+4	JUMPZ	29
+5	PUSHI	5
+6	POPM	2000
+7	PUSHI	6
+8	POPM	2001
+9	PUSHM	2000
+10	PUSHM	2001
+11	ADD	0
+12	STDOUT	0
+13	PUSHM	2000
+14	PUSHM	2001
+15	GEQ	0
+16	JUMPZ	29
+17	PUSHI	1
+18	POPM	2000
+19	PUSHI	2
+20	POPM	2001
+21	PUSHM	2000
+22	PUSHM	2001
+23	MUL	0
+24	STDOUT	0
+25	PUSHM	2000
+26	PUSHM	2001
+27	DIV	0
+28	STDOUT	0
+29	PUSHM	2004
+30	PUSHM	2005
+31	ADD	0
+32	POPM	2006
+33	PUSHM	2004
+34	PUSHM	2005
+35	SUB	0
+36	POPM	2006
+37	PUSHM	2004
+38	PUSHM	2005
+39	DIV	0
+40	POPM	2006
+41	LABEL	0

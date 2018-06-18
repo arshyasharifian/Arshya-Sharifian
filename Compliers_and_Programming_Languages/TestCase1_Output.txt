@@ -1,0 +1,127 @@
+TestCase1.txt
+     token			lexeme
+--------------------------------------------------------------
+        %%			separator
+<rat18s> -><Opt Function Definitions > %% <Opt Declaration List> <Statement List>
+       int			keyword
+<Opt Declaration List> ->  <Declaration List> | <Empty>
+<Declaration List> ->  <Declaration> ; <Declaration List Prime>
+<Declaration> ->  <Qualifier> <Ids>
+<Qualifier> -> int | boolean | real
+         i			identifier
+<IDs> ->  <identifier> <IDs Prime>
+         ,			separator
+<Ids Prime> ->  <Empty> |, <Ids>
+       max			identifier
+<IDs> ->  <identifier> <IDs Prime>
+         ,			separator
+<Ids Prime> ->  <Empty> |, <Ids>
+         x			identifier
+<IDs> ->  <identifier> <IDs Prime>
+         ,			separator
+<Ids Prime> ->  <Empty> |, <Ids>
+         y			identifier
+<IDs> ->  <identifier> <IDs Prime>
+         ,			separator
+<Ids Prime> ->  <Empty> |, <Ids>
+         a			identifier
+<IDs> ->  <identifier> <IDs Prime>
+         ,			separator
+<Ids Prime> ->  <Empty> |, <Ids>
+         b			identifier
+<IDs> ->  <identifier> <IDs Prime>
+         ,			separator
+<Ids Prime> ->  <Empty> |, <Ids>
+         c			identifier
+<IDs> ->  <identifier> <IDs Prime>
+         ;			separator
+<Ids Prime> ->  <Empty> |, <Ids>
+<Ids Prime> -> <Empty>
+     while			keyword
+<Declaration List Prime> ->  <Empty> | <Declaration List>
+<Declaration List Prime> -> <Empty>
+<Opt Declaration List> -> <Empty>
+<Statement List> -><Statement><Statement ListP
+<Statement> -> <Compound> | <Assign> | <If> | <Return> | <Print> | <Scan> | <While>
+<While> -> while (<Condition>) <Statement>
+         (			separator
+         i			identifier
+<Condition> -> <Expression> <Relop> <Expression>
+<Expression> -> <Term> <Expression Prime>
+<Term> -> <Factor> <Term Prime>
+<Factor> -> -<Primary> | <Primary>
+<Factor> -> <Primary>
+<Primary> ->  <Identifier> <Primary Prime> | <Integer> | (<Expression>) | <Real> | true | false
+         <			operator
+<Primary Prime> -> (<Ids>) | Empty
+<Primary Prime> -> <Empty>
+<Term Prime> -> *<Factor> <Term Prime> | /<Factor> <Term Prime> |<Empty>
+<Term Prime> -> <Empty>
+<Expression Prime> -> + <Term> <Expression Prime> | - <Term> <Expression Prime> | Empty
+<Expression Prime> -> <Empty>
+<Relop> -> == | ^= | > | < | => | =< 
+       max			identifier
+<Expression> -> <Term> <Expression Prime>
+<Term> -> <Factor> <Term Prime>
+<Factor> -> -<Primary> | <Primary>
+<Factor> -> <Primary>
+<Primary> ->  <Identifier> <Primary Prime> | <Integer> | (<Expression>) | <Real> | true | false
+         )			separator
+<Primary Prime> -> (<Ids>) | Empty
+<Primary Prime> -> <Empty>
+<Term Prime> -> *<Factor> <Term Prime> | /<Factor> <Term Prime> |<Empty>
+<Term Prime> -> <Empty>
+<Expression Prime> -> + <Term> <Expression Prime> | - <Term> <Expression Prime> | Empty
+<Expression Prime> -> <Empty>
+         i			identifier
+<Statement> -> <Compound> | <Assign> | <If> | <Return> | <Print> | <Scan> | <While>
+<Assign> -> <Identifier> = <Expression>;
+         =			operator
+         i			identifier
+<Expression> -> <Term> <Expression Prime>
+<Term> -> <Factor> <Term Prime>
+<Factor> -> -<Primary> | <Primary>
+<Factor> -> <Primary>
+<Primary> ->  <Identifier> <Primary Prime> | <Integer> | (<Expression>) | <Real> | true | false
+         +			operator
+<Primary Prime> -> (<Ids>) | Empty
+<Primary Prime> -> <Empty>
+<Term Prime> -> *<Factor> <Term Prime> | /<Factor> <Term Prime> |<Empty>
+<Term Prime> -> <Empty>
+<Expression Prime> -> + <Term> <Expression Prime> | - <Term> <Expression Prime> | Empty
+         1			integer
+<Term> -> <Factor> <Term Prime>
+<Factor> -> -<Primary> | <Primary>
+<Factor> -> <Primary>
+<Primary> ->  <Identifier> <Primary Prime> | <Integer> | (<Expression>) | <Real> | true | false
+         ;			separator
+<Primary> -> <integer>
+<Term Prime> -> *<Factor> <Term Prime> | /<Factor> <Term Prime> |<Empty>
+<Term Prime> -> <Empty>
+<Expression Prime> -> + <Term> <Expression Prime> | - <Term> <Expression Prime> | Empty
+<Expression Prime> -> <Empty>
+         x			identifier
+<Statement ListP> -><Empty>|<Statement List
+<Statement List Prime> -> <Empty>
+
+Symbol Table: 
+i	int	2000
+max	int	2001
+x	int	2002
+y	int	2003
+a	int	2004
+b	int	2005
+c	int	2006
+
+Instruction Table: 
+1	LABEL	0
+2	PUSHM	2000
+3	PUSHM	2001
+4	LES	0
+5	JUMPZ	11
+6	PUSHM	2000
+7	PUSHI	1
+8	ADD	0
+9	POPM	2000
+10	JUMP	1
+11	LABEL	0
