@@ -1,5 +1,6 @@
-//Arshya Sharifian
-//CWID: 889626362
+
+//Simple BFS implementation.  
+
 
 #include <iostream>
 using namespace std;
