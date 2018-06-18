@@ -6,6 +6,7 @@
 #include "math.h"
 using namespace std;
 
+//PROPERTY OBJECT
 class Property{
 public:
     long AIN;
@@ -18,13 +19,9 @@ public:
     int num_bed;
     int num_bath;
     int recording_date;
-    //land value
     double land_value;
-    //land base year
     int land_base_year;
-    //improvement value
     double imp_value;
-    //improvement base year
     int imp_base_year;
     int tot_value;
     int address_number;
@@ -34,11 +31,96 @@ public:
     double center_lat;
     double center_long;
 };
+/////////////////////////////////////////////////////////////////////////////////////
+//CREATING PROPERTY OBJECTS AND DATABASE
+bool add_feature (int col_num, Property & new_prop, string prop_field);
+void create_property_DB(fstream & fin, string & line, vector <Property> & prop_list, vector <Property> & invest_list);
 
+//PROPERTY COMPARABILITY FUNCTIONS
+double deg2rad(double deg){ return deg * (M_PI/180);}
+//Haversine formula: algorithm from stackflow to calculate distance between two properties
+double get_distance(double lat1, double lon1, double lat2, double lon2);
+void prop_comparability(vector <Property> & prop_list);
 
-int sum_per_square_foot = 0;
-int average_square_foot_price;
+//FILTER LIST according to user preference
+void filter_list (vector <Property> & filt_prop_list, vector <Property> prop_list);
 
+//SUPERVISED LEARNING
+void get_ratio_mult_resi_prop(vector <Property> invest_list, vector <Property> filt_list, Property cand, int & resi_count, int & mult_count, double mult_dis);
+void adj_weights(vector <Property> & filt_prop_list, int best_index, float & user_mult_unit_w, float & user_flip_w, float & user_price_w, float & user_year_w);
+void test_rand_prop (vector <Property> & filt_prop_list, int best_index, float & user_mult_unit_w, float & user_flip_w, float & user_price_w, float & user_year_w);
+
+//RECOMMENDATION
+int find_cand(vector <Property> filt_prop_list, vector <Property> invest_list, Property & best, float & user_price_w, float & user_flip_w, float & user_mult_unit_w, float & user_year_w);
+
+/////////////////////////////////////////////////////////////////////////////////////
+int main() {
+    
+    //OPEN DATA FILE
+    string line;
+    fstream fin;
+    fin.open("np2.csv");
+    getline(fin, line);
+    
+    //VARIABLES
+    Property best;
+    int best_index = 0;
+    
+    //initial weights
+    float user_price_w = 1;
+    float user_flip_w = .75;
+    float user_mult_unit_w = 1;
+    float user_year_w = 1;
+    
+    //while condition
+    bool prop_not_found = 1;
+    
+    //VECTORS
+    vector <Property> invest_list;
+    vector <Property> prop_list;
+    vector <Property> filt_prop_list;
+    
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+    //create database
+    create_property_DB(fin, line, prop_list, invest_list);
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+    
+    //apples to apples: estimate property values using recently sold neighbor information
+    prop_comparability(prop_list);
+    
+///////////////////////////////////////////////////////////////////////////////////////////////
+    
+    //filter list according to user preferences
+    filter_list(filt_prop_list, prop_list);
+    
+///////////////////////////////////////////////////////////////////////////////////////////////
+    
+    while (prop_not_found){
+        //TESTING: WEIGHT ADJUSTMENT
+        test_rand_prop (filt_prop_list, best_index, user_mult_unit_w, user_flip_w, user_price_w, user_year_w);
+        
+        //FIND BEST PROPERTY
+        best_index = find_cand(filt_prop_list, invest_list, best, user_price_w, user_flip_w, user_mult_unit_w, user_year_w);
+        
+        cout << "Here is the best:" << endl;
+        cout << best.address_number << " " << best.address_street << " " << best.tot_value << endl;
+
+        cout << "printing final weights: " <<endl
+             << "multiple units weight: " << user_mult_unit_w << endl
+             << "user flip weight:  " << user_flip_w << endl
+             << "user price weight: " << user_price_w << endl
+             << "user year weight: " << user_year_w << endl;
+        
+        cout << "do you want to continue: 1 for yes, 0 for no" << endl;
+        cin >> prop_not_found;
+    }
+    
+    return 0;
+    
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool add_feature (int col_num, Property & new_prop, string prop_field){
     
     switch (col_num){
@@ -55,7 +137,6 @@ bool add_feature (int col_num, Property & new_prop, string prop_field){
         case 5: new_prop.effective_year_built = stoi(prop_field);
             break;
         case 6: new_prop.SQFT_home = stoi(prop_field);
-                sum_per_square_foot+=new_prop.SQFT_home;
             break;
         case 7: new_prop.num_bed = stoi(prop_field);
             break;
@@ -95,17 +176,12 @@ bool add_feature (int col_num, Property & new_prop, string prop_field){
     
     return true;
 }
-
-
-
-
-///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void create_property_DB(fstream & fin, string & line, vector <Property> & prop_list, vector <Property> & invest_list){
     
     int column_count = 0;
     string keyword = "";
-    
     
     while (getline(fin, line)){
         Property new_prop;
@@ -136,7 +212,7 @@ void create_property_DB(fstream & fin, string & line, vector <Property> & prop_l
         
         //if AIN of new_prop is the same as the AIN for the last property inserted in prop_list
         //then check if new_prop.land_value_year is the same as the last property's land_value_year
-            //if its not
+        //if its not
         
         
         if (new_prop.Prop_code > 100){
@@ -149,19 +225,11 @@ void create_property_DB(fstream & fin, string & line, vector <Property> & prop_l
         column_count = 0;
     }//end while
     
-    average_square_foot_price = sum_per_square_foot/prop_list.size();
-    
     //return prop_list;
     
 }
-///////////////////////////////////////////////////////////////////////////////
-//PROPERTY COMPARABILITY FUNCTIONS
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-double deg2rad(double deg){
-    return deg * (M_PI/180);
-}
-
-//Haversine formula: algorithm from stackflow to calculate distance between two properties
 double get_distance(double lat1, double lon1, double lat2, double lon2){
     
     int r = 6371;
@@ -176,6 +244,7 @@ double get_distance(double lat1, double lon1, double lat2, double lon2){
     
     return toMiles;
 }
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void prop_comparability(vector <Property> & prop_list){
     cout << "Estimating Property Values" << endl;
@@ -203,7 +272,7 @@ void prop_comparability(vector <Property> & prop_list){
                             }
                         }
                     }
-                   
+                    
                     //if the candidate property is closer (in features) than previous candidate
                     if ((sim_dist < best_min_dist) && (sim_dist > 0)){
                         cand = prop_list[k];
@@ -221,25 +290,23 @@ void prop_comparability(vector <Property> & prop_list){
     }//for i
     
 }
-
-///////////////////////////////////////////////////////////////////////////////
-//FILTER LIST
-
-//GLOBAL VARIABLES FOR SORTING
-int min_sqft = 0;
-int max_sqft = 100000;
-
-int min_num_bed = 0;
-int max_num_bed = 100;
-
-int min_num_bath = 0;
-int max_num_bath = 0;
-
-int min_price = 0;
-int max_price = 100000000;
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void filter_list (vector <Property> & filt_prop_list, vector <Property> prop_list){
+    
+    //VARIABLES FOR FILTERING
+    int min_sqft = 0;
+    int max_sqft = 100000;
+    
+    int min_num_bed = 0;
+    int max_num_bed = 100;
+    
+    int min_num_bath = 0;
+    int max_num_bath = 0;
+    
+    int min_price = 0;
+    int max_price = 100000000;
+    
     cout << "Please define the minimum square footage acceptable:  ";
     cin >> min_sqft;
     
@@ -279,12 +346,7 @@ void filter_list (vector <Property> & filt_prop_list, vector <Property> prop_lis
     }
     
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////
-
-void adj_weights(vector <Property> & filt_prop_list, int best_index, float & user_mult_unit_w, float & user_flip_w, float & user_price_w);
-
-//FIND BEST CANDIDATE
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void get_ratio_mult_resi_prop(vector <Property> invest_list, vector <Property> filt_list, Property cand, int & resi_count, int & mult_count, double mult_dis){
     for (int i = 0; i < invest_list.size(); i++){
         if (get_distance(cand.center_lat, cand.center_long, invest_list[i].center_lat, invest_list[i].center_long) <=mult_dis){
@@ -300,7 +362,7 @@ void get_ratio_mult_resi_prop(vector <Property> invest_list, vector <Property> f
     
     
 }
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int find_cand(vector <Property> filt_prop_list, vector <Property> invest_list, Property & best, float & user_price_w, float & user_flip_w, float & user_mult_unit_w, float & user_year_w){
     
     Property cand;
@@ -334,7 +396,7 @@ int find_cand(vector <Property> filt_prop_list, vector <Property> invest_list, P
         
         //CREATE WEIGHT FOR ACTIVITY: COMPARE LAND BASE YEAR TO 1975
         year_w = user_year_w * (1975/(filt_prop_list[i].land_base_year));
-
+        
         //total weight value
         cand_tot_w = price_w + flip_w + mult_w + year_w;
         
@@ -344,17 +406,13 @@ int find_cand(vector <Property> filt_prop_list, vector <Property> invest_list, P
             best_tot_w = cand_tot_w;
             cand_tot_w = 0;
             best_index = i;
-
+            
         }
     }
     
     return best_index;
 }
-/////////////////////////////////////////////////////////////////////////////////////
-//WEIGHT ADJUSTMENTS
-
-void adj_weights(vector <Property> & filt_prop_list, int best_index, float & user_mult_unit_w, float & user_flip_w, float & user_price_w, float & user_year_w);
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void test_rand_prop (vector <Property> & filt_prop_list, int best_index, float & user_mult_unit_w, float & user_flip_w, float & user_price_w, float & user_year_w){
     vector <Property> rand_props;
     
@@ -365,10 +423,9 @@ void test_rand_prop (vector <Property> & filt_prop_list, int best_index, float &
         cout << filt_prop_list[rand_index].address_number << " " << filt_prop_list[rand_index].address_street << " " << filt_prop_list[rand_index].tot_value << endl;
         //adjust weights here
         adj_weights(filt_prop_list, best_index, user_mult_unit_w, user_flip_w, user_price_w, user_year_w);
-        
     }
 }
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void adj_weights(vector <Property> & filt_prop_list, int best_index, float & user_mult_unit_w, float & user_flip_w, float & user_price_w, float & user_year_w){
     
     bool user_like = false;
@@ -398,7 +455,7 @@ void adj_weights(vector <Property> & filt_prop_list, int best_index, float & use
     }
     
     cin >> user_sel;
-
+    
     //scale for impact
     //set at 1.1 and initially raise to 1, then 2.... (exponent 1.1^1, then 1.1^2, 1.1^3)...here the 1, 2, 3 represent the number of times a property is judged
     
@@ -431,71 +488,5 @@ void adj_weights(vector <Property> & filt_prop_list, int best_index, float & use
         }
     }
 }
-///////////////////////////////////////////////////////////////////////////////
 
-int main() {
-    
-    //OPEN DATA FILE
-    string line;
-    fstream fin;
-    fin.open("np2.csv");
-    getline(fin, line);
-    
-    //VARIABLES
-    Property best;
-    int best_index = 0;
-    
-    //initial weights
-    float user_price_w = 1;
-    float user_flip_w = .75;
-    float user_mult_unit_w = 1;
-    float user_year_w = 1;
-    
-    //while condition
-    bool prop_not_found = 1;
-    
-    //VECTORS
-    vector <Property> invest_list;
-    vector <Property> prop_list;
-    vector <Property> filt_prop_list;
-    
-///////////////////////////////////////////////////////////////////////////////////////////////
 
-    //create database
-    create_property_DB(fin, line, prop_list, invest_list);
-
-///////////////////////////////////////////////////////////////////////////////////////////////
-    
-    //apples to apples: estimate property values using recently sold neighbor information
-    prop_comparability(prop_list);
-
-///////////////////////////////////////////////////////////////////////////////////////////////
-    
-    //filter list according to user preferences
-    filter_list(filt_prop_list, prop_list);
-    
-///////////////////////////////////////////////////////////////////////////////////////////////
-    
-    while (prop_not_found){
-        //TESTING: WEIGHT ADJUSTMENT
-        test_rand_prop (filt_prop_list, best_index, user_mult_unit_w, user_flip_w, user_price_w, user_year_w);
-        
-        //FIND BEST PROPERTY
-        best_index = find_cand(filt_prop_list, invest_list, best, user_price_w, user_flip_w, user_mult_unit_w, user_year_w);
-        
-        cout << "Here is the best:" << endl;
-        cout << best.address_number << " " << best.address_street << " " << best.tot_value << endl;
-
-        cout << "printing final weights: " <<endl
-             << "multiple units weight: " << user_mult_unit_w << endl
-             << "user flip weight:  " << user_flip_w << endl
-             << "user price weight: " << user_price_w << endl
-             << "user year weight: " << user_year_w << endl;
-        
-        cout << "do you want to continue: 1 for yes, 0 for no" << endl;
-        cin >> prop_not_found;
-    }
-    
-    return 0;
-    
-}
