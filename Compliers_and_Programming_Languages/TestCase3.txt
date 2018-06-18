@@ -1,0 +1,26 @@
+ %%
+ ! Rule 15- Compound and Rule 17 - Assign!
+ int x, y, r, j;
+ int a, b, c;
+ 
+	if (x=<y){
+		x=5;
+		y=6;
+		put(x+y);
+		
+		if (x=>y){
+			x=1;
+			y=2;
+			put(x*y);
+		}
+		else 
+			put(x/y);
+		endif
+	}
+  endif
+  		
+  ! Rule 25!
+  c = a+b;
+  c = a-b;
+  c = a/b;
+  c = a*b;

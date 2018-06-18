@@ -1,0 +1,6 @@
+%%
+int i, max, x, y, a, b, c;
+while (i < max)   
+i  = i  + 1;
+
+x = a + b*c; 
