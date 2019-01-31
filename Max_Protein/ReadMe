@@ -1,1 +1,64 @@
-Compared Greedy vs Exhaustive Search algorithms to determine which would most effectivly select the food items that will maximize the amount of protein given a caloric limitation.  
+Compared Greedy vs Exhaustive Search algorithms to determine which would most effectivly select the food items that will maximize the amount of protein given a caloric limitation. 
+
+Intro:
+Some people strive to make healthy food decisions by paying attention to nutritional content of their food. Our computational problem is inspired by this process. The premise of our problem is that a person wants to choose foods that maximize protein (measured in units of grams) while staying within a set calorie budget (measured in units of kilocalories, commonly called just “calories”). This problem can generalize to any other kind of dietary optimization; we could just as easily minimize fat within a calorie budget, maximize omega-3 acids within a calorie budget, minimize calories while meeting all vitamin requirements, and so on. We’re choosing protein somewhat arbitrarily to make this a concrete problem, and because calorie and protein data are both easily obtainable.
+
+high-protein diet problem statement:
+input: a positive calorie budget C;and a vector Vof food objects, where each food f=(c,p) has an integer amount of calories c >0 and protein p 0
+output: a vector Kof food objects drawn from V, such that the sum of all calorie values is within the food budget i.e.
+(c,p)Vc C;and the sum of all protein values (c,p)p is maximized
+
+Note that we require each food’s calorie value c>0 to be positive; we are omitting zero-calorie foods, such as water and diet soda, which never contain protein.
+
+The Algorithms:
+
+The first uses the greedy pattern. The greedy heuristic is to always choose the highest-protein food that fits within the calorie budget:
+
+greedy_max_protein(C, foods):
+todo = foods
+result = empty vector
+result_cal = 0
+while todo is not empty:
+Find the food f in todo of maximum protein.
+Remove f from todo.
+Let c be f’s calories.
+if (result_cal + c) <= C:
+result.add_back(f)
+result_cal += c
+return result
+
+The time complexity of the greedy algorithm depends on the data structures that are used to implement it. A naive approach using unsorted vectors and sequential search to find f takes O(n2) time. This is acceptable but not ideal. Using a heap, binary search tree, or sorting algorithm in a fairly straightforward way can speed this up to O(n n).
+
+The second uses a proper exhaustive search.
+exhaustive_max_protein(C, foods):
+best = None
+for candidate in subsets(foods):
+if total_calories(candidate) <= C:
+if best is None or
+   total_protein(candidate) > total_protein(best):
+best = candidate
+return best
+
+As discussed in section 6.5.4 of ADITA, subsets(foods) can be implemented using bitwise operations.
+
+exhaustive_max_protein(C, foods):
+n = |foods|
+best = None
+for bits from 0 to (2n -1):
+candidate = empty vector
+for j from 0 to n-1:
+if ((bits >> j) & 1) == 1:
+candidate.add_back(foods[j])
+
+if total_calories(candidate) <= C:
+if best is None or
+   total_protein(candidate) > total_protein(best):
+best = candidate
+return best
+
+For this to work, the bits loop counter variable needs to be able to store the quantity 2n-1. A good way of ensuring that is to use the largest integer data type in C++, which is the uint64_t type that is 64 bits wide. This creates a limitation that the exhaustive search algorithm can only handle n<64. This is unlikely to be a practical problem, because the time complexity of this algorithm is O(2nn).
+
+Our theory predicts that the O(2nn) exhaustive search algorithm will be far slower than the greedy algorithm with its O(n2) or O(n n) time complexity. Your experiment will show whether this is the case.
+
+Feel free to reach out to me if you have any questions: arshya.sharifian@gmail.com
+
