@@ -1,0 +1,1 @@
+Rapbot is a C++ program aiming to find phonetic patterns in text files.  In other words, we are writing an algorithm to determine whether which words rhyme together.  Ideally, this could visualize the rhyme scheme of rap songs.  
